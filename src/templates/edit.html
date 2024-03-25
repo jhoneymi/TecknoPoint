@@ -1,0 +1,368 @@
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: sans-serif;
+    }
+
+    h1 {
+        text-align: center;
+        color: #333;
+    }
+
+    table {
+        width: 100%;
+        margin: 20px auto;
+        border-collapse: collapse;
+        border: 1px solid #ddd;
+        background-color: #fff;
+    }
+
+    th, td {
+        padding: 10px;
+        text-align: left;
+    }
+
+    th {
+        background-color: #f2f2f2;
+        border-bottom: 2px solid #ddd;
+    }
+
+    tr:nth-child(even) {
+        background-color: #f9f9f9;
+    }
+
+    tr:hover {
+        background-color: #f2f2f2;
+    }
+
+    button {
+        padding: 8px 16px;
+        border: none;
+        background-color: #4CAF50;
+        color: white;
+        font-size: 14px;
+        cursor: pointer;
+        border-radius: 4px;
+    }
+
+    .Borrar {
+        background-color: rgb(241, 50, 50);
+    }
+
+    .Borrar:hover {
+        background-color: rgb(207, 66, 66);
+    }
+
+    .Buscar {
+        background-color: rgb(50, 50, 243);
+    }
+
+    .Stock {
+        background-color: rgb(153, 0, 153);
+    }
+
+    button:hover {
+        background-color: #45a049;
+    }
+
+    /* Header */
+
+    header {
+        width: 100%;
+        height: 60px;
+        background: rgb(0, 51, 190);
+        position: fixed;
+        z-index: 10;
+    }
+
+    .lnr-menu {
+        font-size: 30px;
+        position: relative;
+        top: 10px;
+        left: 10px;
+        color: white;
+        border: 1px solid transparent;
+        transition: all 300ms;
+        padding: 2px;
+        cursor: pointer;
+    }
+
+    .lnr-menu:hover {
+        border: 1px solid white;
+    }
+
+    /* Menu */
+
+    .menu {
+        top: 60px;
+        width: 60px;
+        height: 100vh;
+        background: rgb(58, 58, 58);
+        overflow: hidden;
+        position: fixed;
+        transition: all 300ms;
+        z-index: 9;
+        overflow: auto;
+    }
+
+    .menu-show {
+        width: 240px;
+    }
+
+    .line {
+        margin-top: 10px;
+        padding: 10px;
+        transition: all 300ms;
+    }
+    
+    .line:hover {
+        background: rgb(0, 51, 190);
+        cursor: pointer;
+    }
+
+    .line label {
+        color: white;
+        font-size: 30px;
+        cursor: pointer;
+    }
+
+    .line font {
+        margin-left: 30px;
+        font-size: 18px;
+        font-weight: 100;
+        cursor: pointer;
+    }
+
+    /* Articulo */
+
+    main {
+        width: 80%;
+        position: absolute;
+        top: 60px;
+        left: 70px;
+        padding: 20px;
+        transition: all 300ms;
+    }
+
+    .main-move {
+        left: 250px;
+    }
+
+    article h1 {
+        font-size: 40px;
+    }
+
+    article p {
+        font-size: 20px;
+        margin-top: 20px;
+        font-weight: 100;
+    }
+
+    /* Modal */
+    #removed_item {
+        display: none;
+        position: fixed;
+        z-index: 1;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgba(0,0,0,0.4);
+    }
+
+
+    #loginModal {
+        display: none;
+        position: fixed;
+        z-index: 1;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgba(0,0,0,0.4);
+    }
+
+    #loginModal-edit {
+        display: block;
+        position: fixed;
+        z-index: 1;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgba(0,0,0,0.4);
+    }
+
+    .modal-content {
+        background-color: #fefefe;
+        margin: 10% auto;
+        padding: 20px;
+        border: 1px solid #888;
+        width: 80%;
+        max-width: 450px;
+        border-radius: 8px;
+    }
+
+    .close {
+        color: #aaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+        margin-top: -10px;
+    }
+
+    .close:hover,
+    .close:focus {
+        color: black;
+        text-decoration: none;
+        cursor: pointer;
+    }
+
+    .close1 {
+        color: #aaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+        margin-top: -10px;
+    }
+
+    .close1:hover,
+    .close1:focus {
+        color: black;
+        text-decoration: none;
+        cursor: pointer;
+    }
+
+    h2 {
+        margin-bottom: 9px;
+        margin-top: 0;
+    }
+
+    form {
+        display: flex;
+        flex-direction: column;
+    }
+
+    input[type="text"],
+    input[type="number"],
+    button[type="submit"] {
+        margin-bottom: 15px;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        font-size: 16px;
+    }
+
+    button[type="submit"] {
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        cursor: pointer;
+    }
+
+    button[type="submit"]:hover {
+        background-color: #45a049;
+    }
+
+    input[type="text"]:focus,
+    input[type="number"]:focus {
+        outline: none;
+        border-color: #4CAF50;
+    }
+
+    /* Select */
+
+    select#categorias {
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        font-size: 16px;
+        width: 100%;
+        margin-bottom: 15px;
+    }
+
+    select#categorias option {
+        padding: 10px;
+        font-size: 16px;
+    }
+</style>
+
+<div id="loginModal-edit" class="modal">
+    <div class="modal-content">
+      <a href="/inventario"><span id="close-edit" class="close">&times;</span></a>
+      <h2>Modify Article</h2>
+      <form method="post" action="/update/{{ datos.0 }}" enctype="multipart/form-data">
+        <input type="text" id="art_name" name="art_name" placeholder="Nombre del artículo" value="{{ datos.1 }}">
+        <input type="number" step="any" id="art_precio" name="art_precio" placeholder="Precio del artículo" value="{{ datos.2 }}">
+        <input type="number" step="any" id="art_itbis" name="art_itbis" placeholder="Impuesto (%)" value="{{ datos.3 }}">
+        <input type="number" step="any" id="art_cantidad" name="art_cantidad" placeholder="Ingrese la cantidad del artículo" value="{{ datos.4 }}">
+        <select id="categorias" name="catalogo">
+            <option value="{{ datos.6 }}">{{ datos.6 }}</option>
+            <optgroup label="Computers">
+                <option value="desktop">Desktop computers</option>
+                <option value="laptop">Laptops (Portables)</option>
+                <option value="mini-pc">Mini PC</option>
+            </optgroup>
+            <optgroup label="Internal components">
+                <option value="cpu">Processors (CPU)</option>
+                <option value="gpu">Graphics cards (GPU)</option>
+                <option value="motherboard">Motherboards</option>
+                <option value="ram">RAM memory</option>
+                <option value="storage">Storage (HDD, SSD, NVMe)</option>
+                <option value="power">Power Supplies (PSU)</option>
+                <option value="coling">Cooling (fans, heat sinks, liquid cooling systems)</option>
+            </optgroup>
+            <optgroup label="Peripherals">
+                <option value="monitor">Monitors</option>
+                <option value="keyboard">Keyboards</option>
+                <option value="mouse">Mice (Mouses)</option>
+                <option value="head_and_mic">Headphones and microphones</option>
+                <option value="speakers">Speakers</option>
+                <option value="Webcam">Webcams</option>
+                <option value="Printer">Printers and scanners</option>
+            </optgroup>
+            <optgroup label="Accessories">
+                  <option value="laptop_sleeve">Laptop Sleeves</option>
+                  <option value="briefcase">Briefcases and backpacks</option>
+                  <option value="monitor_stand">Monitor stands</option>
+                  <option value="ergonomic_mice">Ergonomic mice</option>
+                  <option value="mechanical_keyboard">Mechanical keyboards</option>
+                  <option value="mouse_pad">Mouse pads</option>
+            </optgroup>
+            <optgroup label="Software">
+                  <option value="operating_system">Operating systems (Windows, macOS, Linux)</option>
+                  <option value="office_suite">Office suites (Microsoft Office, LibreOffice)</option>
+                  <option value="antivirus">Antivirus and security software</option>
+                  <option value="design_software">Design software (Adobe Creative Suite, AutoCAD)</option>
+                  <option value="video_and_audio_software">Video and audio editing software (Adobe Premiere, Audacity)</option>
+            </optgroup>
+            <optgroup label="Network Components">
+                  <option value="router">Routers</option>
+                  <option value="switche">Switches</option>
+                  <option value="card_of_red">Network cards (Wi-Fi and Ethernet)</option>
+                  <option value="network_adapter">Network adapters (USB Wi-Fi, PLC)</option>
+            </optgroup>
+            <optgroup label="External storage devices">
+                  <option value="usb">USB Flash Drives</option>
+                  <option value="external_hard">External hard drives</option>
+                  <option value="external_solid">External Solid State Drives</option>
+                  <option value="SD">Memory cards (SD, microSD)</option>
+            </optgroup>
+            <optgroup label="Gaming components">
+                  <option value="gaming_keyboard">Gaming keyboards</option>
+                  <option value="gaming_mice">Gaming mice</option>
+                  <option value="gaming_headphone">Gaming headphones</option>
+                  <option value="gaming_chair">Gaming chairs</option>
+                  <option value="gaming_monitor">Gaming monitors</option>
+            </optgroup>
+            <input type="file" name="image" accept="image/*" value="{{ datos.7 }}">
+        </select>
+        <button type="submit">Updated</button>
+      </form>
+    </div>
+</div>

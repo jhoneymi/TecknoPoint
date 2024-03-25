@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Proveedores</title>
+    <link rel="icon" href="../static/img/image.png">
+    <link rel="stylesheet" href="https://cdn.linearicons.com/free/1.0.0/icon-font.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: sans-serif;
+        }
+
+        a {
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: none;
+        }
+
+        /* Header */
+
+        header {
+            width: 100%;
+            height: 60px;
+            background: rgb(0, 51, 190);
+            position: fixed;
+            z-index: 10;
+        }
+
+        .lnr-menu {
+            font-size: 30px;
+            position: relative;
+            top: 10px;
+            left: 10px;
+            color: white;
+            border: 1px solid transparent;
+            transition: all 300ms;
+            padding: 2px;
+            cursor: pointer;
+        }
+
+        .lnr-menu:hover {
+            border: 1px solid white;
+        }
+
+        /* Menu */
+
+        .menu {
+            top: 60px;
+            width: 60px;
+            height: 100vh;
+            background: rgb(58, 58, 58);
+            overflow: hidden;
+            position: fixed;
+            transition: all 300ms;
+            z-index: 9;
+            overflow: auto;
+        }
+
+        .menu-show {
+            width: 240px;
+        }
+
+        .line {
+            margin-top: 10px;
+            padding: 10px;
+            transition: all 300ms;
+        }
+        
+        .line:hover {
+            background: rgb(0, 51, 190);
+            cursor: pointer;
+        }
+
+        .line label {
+            color: white;
+            font-size: 30px;
+            cursor: pointer;
+        }
+
+        .line font {
+            margin-left: 30px;
+            font-size: 18px;
+            font-weight: 100;
+            cursor: pointer;
+        }
+
+        /* Articulo */
+
+        main {
+            width: 90%;
+            position: absolute;
+            top: 60px;
+            left: 70px;
+            padding: 20px;
+            transition: all 300ms;
+        }
+
+        .main-move {
+            left: 250px;
+        }
+
+        article h1 {
+            font-size: 40px;
+        }
+
+        article p {
+            font-size: 20px;
+            margin-top: 20px;
+            font-weight: 100;
+        }
+
+        /* Tabla */
+
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+
+        table {
+            width: 100%;
+            margin: 20px auto;
+            border-collapse: collapse;
+            border: 1px solid #ddd;
+            background-color: #fff;
+        }
+
+        th, td {
+            padding: 15px;
+            text-align: center;
+        }
+
+        th {
+            background-color: #f2f2f2;
+            border-bottom: 2px solid #ddd;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        tr:hover {
+            background-color: #f2f2f2;
+        }
+
+        button {
+            padding: 8px 16px;
+            border: none;
+            background-color: #4CAF50;
+            color: white;
+            font-size: 14px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        .Borrar {
+            background-color: rgb(241, 50, 50);
+        }
+
+        .Borrar:hover {
+            background-color: rgb(207, 66, 66);
+        }
+
+        .Buscar {
+            background-color: rgb(50, 50, 243);
+        }
+
+        .Stock {
+            background-color: rgb(153, 0, 153);
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        /* Modal */
+
+        #removed_item {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+
+
+        #loginModal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+
+        #loginModal-edit {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 10% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 450px;
+            border-radius: 8px;
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            margin-top: -10px;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .close1 {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            margin-top: -10px;
+        }
+
+        .close1:hover,
+        .close1:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        h2 {
+            margin-bottom: 9px;
+            margin-top: 0;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        button[type="submit"] {
+            margin-bottom: 15px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        button[type="submit"] {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        button[type="submit"]:hover {
+            background-color: #45a049;
+        }
+
+        input[type="text"]:focus,
+        input[type="number"]:focus {
+            outline: none;
+            border-color: #4CAF50;
+        }
+
+    </style>
+</head>
+<body>
+    <header>
+        <label class="lnr lnr-menu"></label>
+    </header>
+
+    <div class="menu">
+        <a href="/inicio"><div class="line"><label class="lnr lnr-home"><font>Home</font></label></div></a>
+        <a href="/inventario"><div class="line"><label class="lnr lnr-briefcase"><font>Inventory</font></label></div></a>
+        <a href="/empleados"><div class="line"><label class="lnr lnr-users"><font>Employees</font></label></div></a>
+        <a href="/bills"><div class="line"><label class="lnr lnr-file-empty"><font>Bills</font></label></div></a>
+        <a href="/customers"><div class="line"><label class="lnr lnr-user"><font>Clients</font></label></div></a>
+        <a href="/proveedor"><div class="line"><label class="lnr lnr-store"><font>Suppliers</font></label></div></a>
+        <a href="/article"><div class="line"><label class="lnr lnr-cart"><font>Articles</font></label></div></a>
+        <a href=""><div class="line"><label class="lnr lnr-chart-bars"><font>Price</font></label></div></a>
+    </div>
+
+    <main>
+        <article>
+            <h1>Suppliers</h1>
+            <table>
+                <tr>
+                    <th>Suppliers Name</th>
+                    <th>Address</th>
+                    <th>Phone</th>
+                    <th>Email</th>
+                    <th>Operations</th>
+                </tr>
+                {% for prov in prov %}
+                <tr>
+                    <td>{{ prov[1] }}</td>
+                    <td>{{ prov[2] }}</td>
+                    <td>{{ prov[3] }}</td>
+                    <td>{{ prov[4] }}</td>
+                    <td>
+                        
+                        <a href="/edit_prov/{{ prov[0] }}"><button id="edit">Edit</button></a>
+                        <a href="/remove_prov/{{ prov[0] }}"><button id="remove" class="Borrar">Delete</button></a>
+
+                    </td>
+                    <!-- Agrega más celdas según tu esquema de base de datos -->
+                </tr>
+                {% endfor %}
+            </table>
+        <table>
+            <tr>
+                <th><button id="loginBtn" class="Agregar">Add Supplier</button></th>
+                <th><button class="Buscar">Search Provider by Name</button></th>
+            </tr>
+        </table>
+        </article>
+    </main>
+
+    <div id="loginModal" class="modal">
+        <div class="modal-content">
+          <span class="close">&times;</span>
+          <h2>Add Article</h2>
+          <form method="post" action="{{ url_for('add_prov') }}">
+            <input type="text" id="prov_name" name="prov_name" placeholder="Supplier Name" required>
+            <input type="text" id="prov_address" name="prov_address" placeholder="Supplier Address" required>
+            <input type="text" id="prov_phone" name="prov_phone" placeholder="Supplier Phone" required>
+            <input type="text" id="prov_email" name="prov_email" placeholder="Supplier Email" required>
+            <button type="submit">Add</button>
+          </form>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script>
+        $('.lnr-menu').on('click', function() {
+            $('.menu').toggleClass("menu-show");
+            $('main').toggleClass("main-move")
+        });
+
+        var modal = document.getElementById('loginModal');
+        var btn = document.getElementById("loginBtn");
+        var span = document.getElementsByClassName("close")[0];
+      
+        btn.onclick = function() {
+          modal.style.display = "block";
+        }
+      
+        span.onclick = function() {
+          modal.style.display = "none";
+        }
+      
+        window.onclick = function(event) {
+          if (event.target == modal) {
+            modal.style.display = "none";
+          }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bills</title>
+    <link rel="icon" href="../static/img/image.png">
+    <link rel="stylesheet" href="https://cdn.linearicons.com/free/1.0.0/icon-font.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    <script src="https://kit.fontawesome.com/5ef1b31399.js" crossorigin="anonymous"></script>
+    <style>
+        .container {
+            max-width: 450px;
+        }
+
+        .icon-link > .bi {
+            width: .75em;
+            height: .75em;
+        }
+
+        /*
+        * Custom translucent site header
+        */
+
+        .site-header {
+            background-color: rgba(0, 0, 0, .85);
+            -webkit-backdrop-filter: saturate(180%) blur(20px);
+            backdrop-filter: saturate(180%) blur(20px);
+        }
+        .site-header a {
+            color: #8e8e8e;
+            transition: color .15s ease-in-out;
+        }
+        .site-header a:hover {
+            color: #fff;
+            text-decoration: none;
+        }
+
+        /*
+        * Dummy devices (replace them with your own or something else entirely!)
+        */
+
+        .product-device {
+            position: absolute;
+            right: 10%;
+            bottom: -30%;
+            width: 300px;
+            height: 540px;
+            background-color: #333;
+            border-radius: 21px;
+            transform: rotate(30deg);
+        }
+
+        .product-device::before {
+            position: absolute;
+            top: 10%;
+            right: 10px;
+            bottom: 10%;
+            left: 10px;
+            content: "";
+            background-color: rgba(255, 255, 255, .1);
+            border-radius: 5px;
+        }
+
+        .product-device-2 {
+            top: -25%;
+            right: auto;
+            bottom: 0;
+            left: 5%;
+            background-color: #e5e5e5;
+        }
+
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: sans-serif;
+        }
+
+        a {
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: none;
+        }
+
+        /* Tabla */
+
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+
+        table {
+            width: 100%;
+            margin: 20px auto;
+            border-collapse: collapse;
+            border: 1px solid #ddd;
+            background-color: #fff;
+            overflow-y: scroll;
+            max-height: 200px;
+        }
+
+        th, td {
+            padding: 10px;
+            text-align: center;
+        }
+
+        th {
+            background-color: #f2f2f2;
+            border-bottom: 2px solid #ddd;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        tr:hover {
+            background-color: #f2f2f2;
+        }
+
+        button {
+            padding: 8px 16px;
+            border: none;
+            background-color: rgb(241, 50, 50);
+            color: white;
+            font-size: 14px;
+            cursor: pointer;
+            border-radius: 4px;
+            margin-left: 4px;
+            margin-right: 4px;
+        }
+
+        .Quitar {
+            background-color: rgb(241, 50, 50);
+        }
+
+        .Quitar:hover {
+            background-color: rgb(207, 66, 66);
+        }
+
+        .cierre {
+            background-color: rgb(241, 50, 50);
+        }
+
+        .cierre:hover {
+            background-color: rgb(207, 66, 66);
+        }
+
+        .Buscar {
+            background-color: rgb(50, 50, 243);
+        }
+
+        .Buscar:hover {
+            background-color: rgb(36, 36, 204);
+        }
+
+        .Stock {
+            background-color: rgb(153, 0, 153);
+        }
+
+        button:hover {
+            background-color: rgb(207, 66, 66);
+        }
+
+        /* Header */
+
+        header {
+            width: 100%;
+            height: 60px;
+            background: rgb(0, 51, 190);
+            position: fixed;
+            z-index: 10;
+        }
+
+        .lnr-menu {
+            font-size: 30px;
+            position: relative;
+            top: 10px;
+            left: 10px;
+            color: white;
+            border: 1px solid transparent;
+            transition: all 300ms;
+            padding: 2px;
+            cursor: pointer;
+        }
+
+        .lnr-menu:hover {
+            border: 1px solid white;
+        }
+
+        /* Menu */
+
+        .menu {
+            top: 60px;
+            width: 60px;
+            height: 100vh;
+            background: rgb(58, 58, 58);
+            overflow: hidden;
+            position: fixed;
+            transition: all 300ms;
+            z-index: 9;
+            overflow: auto;
+        }
+
+        .menu-show {
+            width: 240px;
+        }
+
+        .line {
+            margin-top: 10px;
+            padding: 10px;
+            transition: all 300ms;
+        }
+        
+        .line:hover {
+            background: rgb(0, 51, 190);
+            cursor: pointer;
+        }
+
+        .line label {
+            color: white;
+            font-size: 30px;
+            cursor: pointer;
+        }
+
+        .line font {
+            margin-left: 30px;
+            font-size: 18px;
+            font-weight: 100;
+            cursor: pointer;
+        }
+
+        /* Articulo */
+
+        main {
+            width: 90%;
+            position: absolute;
+            top: 60px;
+            left: 70px;
+            padding: 20px;
+            transition: all 300ms;
+        }
+
+        article {
+            display: flex;
+            flex-wrap: wrap;
+        }
+
+        .main-move {
+            left: 250px;
+        }
+
+        article h1 {
+            font-size: 40px;
+        }
+
+        article p {
+            font-size: 20px;
+            margin-top: 20px;
+            font-weight: 100;
+        }
+
+        /* Modal */
+        #removed_item {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+
+
+        #loginModal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+
+        #loginModal-compra {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+
+        #loginModal-edit {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 10% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 90%;
+            max-width: 600px;
+            border-radius: 8px;
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            margin-top: -10px;
+        }
+
+        .close-compra {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            margin-top: -10px;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .close-compra:hover,
+        .close-compra:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .close1 {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            margin-top: -10px;
+        }
+
+        .close1:hover,
+        .close1:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        h2 {
+            margin-bottom: 9px;
+            margin-top: 0;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        button[type="submit"] {
+            margin-bottom: 15px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        button[type="submit"] {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        button[type="submit"]:hover {
+            background-color: #45a049;
+        }
+
+        input[type="text"]:focus,
+        input[type="number"]:focus {
+            outline: none;
+            border-color: #4CAF50;
+        }
+
+         /* Select */
+
+         select {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+            width: 100%;
+            margin-bottom: 15px;
+        }
+
+        select option {
+            padding: 10px;
+            font-size: 16px;
+        }
+
+        .bd-placeholder-img {
+          font-size: 1.125rem;
+          text-anchor: middle;
+          -webkit-user-select: none;
+          -moz-user-select: none;
+          user-select: none;
+        }
+  
+        @media (min-width: 768px) {
+          .bd-placeholder-img-lg {
+            font-size: 3.5rem;
+          }
+        }
+  
+        .b-example-divider {
+          width: 100%;
+          background-color: rgba(0, 0, 0, .1);
+          border: solid rgba(0, 0, 0, .15);
+          border-width: 1px 0;
+          box-shadow: inset 0 .5em 1.5em rgba(0, 0, 0, .1), inset 0 .125em .5em rgba(0, 0, 0, .15);
+        }
+  
+        .b-example-vr {
+          flex-shrink: 0;
+          width: 1.5rem;
+        }
+  
+        .bi {
+          vertical-align: -.125em;
+          fill: currentColor;
+        }
+  
+        .nav-scroller {
+          position: relative;
+          z-index: 2;
+          overflow-y: hidden;
+        }
+  
+        .nav-scroller .nav {
+          display: flex;
+          flex-wrap: nowrap;
+          padding-bottom: 1rem;
+          margin-top: -1px;
+          overflow-x: auto;
+          text-align: center;
+          white-space: nowrap;
+          -webkit-overflow-scrolling: touch;
+        }
+  
+        .btn-bd-primary {
+          --bd-violet-bg: #712cf9;
+          --bd-violet-rgb: 112.520718, 44.062154, 249.437846;
+  
+          --bs-btn-font-weight: 600;
+          --bs-btn-color: var(--bs-white);
+          --bs-btn-bg: var(--bd-violet-bg);
+          --bs-btn-border-color: var(--bd-violet-bg);
+          --bs-btn-hover-color: var(--bs-white);
+          --bs-btn-hover-bg: #6528e0;
+          --bs-btn-hover-border-color: #6528e0;
+          --bs-btn-focus-shadow-rgb: var(--bd-violet-rgb);
+          --bs-btn-active-color: var(--bs-btn-hover-color);
+          --bs-btn-active-bg: #5a23c8;
+          --bs-btn-active-border-color: #5a23c8;
+        }
+  
+        .bd-mode-toggle {
+          z-index: 1500;
+        }
+  
+        .bd-mode-toggle .dropdown-menu .active .bi {
+          display: block !important;
+        }
+
+        /* Loader Sesion */
+
+        .loader-container {
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .loader {
+            border: 8px solid #3498db;
+            border-radius: 50%;
+            border-top: 8px solid #f3f3f3;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        /* Oculta la página principal mientras se carga */
+        .hidden {
+            display: none;
+        }
+
+        .logout {
+            font-size: 20px;
+            position: relative;
+            top: 5px;
+            left: 215vh;
+            color: white;
+            border: 1px solid transparent;
+            transition: all 300ms;
+            padding: 2px;
+            cursor: pointer;
+        }
+
+        /* Div Bills */
+        .mi-div {
+            color: #333;
+            font-size: 16px;
+            width: calc(10% - -90px);
+            height: 250px;
+            padding: 10px;
+            background-color: #ddd;
+            box-shadow: inset #4b4a4a;
+            border: 1px solid #ddd;
+            border-radius: 2px;
+            margin: auto 20px;
+            margin: 10px;
+        }
+
+        .mi-a {
+            text-decoration: none;
+            color: #333;
+            padding: 10px;
+        }
+
+        .mi-div ul {
+            width: auto;
+            padding-left: 10px;
+            text-decoration: none;
+            text-align: left;
+            list-style: none;
+        }
+
+        .mi-div h5 {
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+    </style>
+</head>
+<body onload="preloader()">
+
+    <div class="loader-container">
+        <div class="loader"></div>
+    </div>
+
+    <header>
+        <label class="lnr lnr-menu"></label>
+        <a class="logout" href="/logout"><i class="fa-solid fa-right-from-bracket"></i></a>
+    </header>
+
+    <div class="menu">
+        <a href="/inicio"><div class="line"><label class="lnr lnr-home"><font>Home</font></label></div></a>
+        <a href="/inventario"><div class="line"><label class="lnr lnr-briefcase"><font>Inventory</font></label></div></a>
+        <a href="/empleados"><div class="line"><label class="lnr lnr-users"><font>Employees</font></label></div></a>
+        <a href="/bills"><div class="line"><label class="lnr lnr-file-empty"><font>Bills</font></label></div></a>
+        <a href="/customers"><div class="line"><label class="lnr lnr-user"><font>Clients</font></label></div></a>
+        <a href="/proveedor"><div class="line"><label class="lnr lnr-store"><font>Suppliers</font></label></div></a>
+        <a href="/article"><div class="line"><label class="lnr lnr-cart"><font>Articles</font></label></div></a>
+        <a href=""><div class="line"><label class="lnr lnr-chart-bars"><font>Price</font></label></div></a>
+    </div>
+
+    <main>
+        <article>
+            <table>
+                {% for fila in bills %}
+                   
+                    <div class="mi-div">
+                        <a class="mi-a" href="/factura_detalle/{{ fila.0 }}">
+                            <h5>Factura N. {{ fila.2 }}</h5>
+                            <ul>
+                                <li> <strong>date:</strong> {{ fila.1 }}</li>
+                                <li> <strong>customer:</strong> {{ fila.3 }}</li>
+                                <li> <strong>cashier:</strong> {{ fila.9 }}</li>
+                                <li><strong>methodo pago:</strong> {{ fila.5 }}</li>
+                                <li> <strong>total:</strong> {{ fila.11 }} $</li>
+                            </ul>
+                        </a>
+                    </div>
+                {% endfor %}
+            </table>
+            <table>
+                <tr>
+                    <a href=""><button id="cierre" class="cierre">Cierre de Caja</button></a>
+                </tr>
+            </table>
+        </article>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js" integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js" integrity="sha384-0pUGZvbkm6XF6gxjEnlmuGrJXVbNuzT9qBBavbLwCsOGabYfZo0T0to5eqruptLy" crossorigin="anonymous"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script>
+        $('.lnr-menu').on('click', function() {
+            $('.menu').toggleClass("menu-show");
+            $('main').toggleClass("main-move")
+        });
+
+        window.addEventListener('load', function() {
+            // Obtén el contenedor de la página de carga
+            var loaderContainer = document.querySelector('.loader-container');
+            // Oculta el contenedor de la página de carga
+            loaderContainer.style.display = 'none';
+            // Muestra la página principal
+            var mainContent = document.getElementById('mainContent');
+            mainContent.classList.remove('hidden');
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdn.linearicons.com/free/1.0.0/icon-font.min.css">
+    <title>Article</title>
+    <link rel="icon" href="../static/img/image.png">
+    <script src="https://kit.fontawesome.com/5ef1b31399.js" crossorigin="anonymous"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: sans-serif;
+        }
+
+        a {
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: none;
+        }
+
+        /* Tabla */
+
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+
+        table {
+            width: 100%;
+            margin: 20px auto;
+            border-collapse: collapse;
+            border: 1px solid #ddd;
+            background-color: #fff;
+            overflow-y: auto;
+            max-height: 200px;
+        }
+
+        th, td {
+            padding: 10px;
+            text-align: center;
+        }
+
+        th {
+            background-color: #f2f2f2;
+            border-bottom: 2px solid #ddd;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        tr:hover {
+            background-color: #f2f2f2;
+        }
+
+        button {
+            padding: 8px 16px;
+            border: none;
+            background-color: #4CAF50;
+            color: white;
+            font-size: 14px;
+            cursor: pointer;
+            border-radius: 4px;
+            margin-left: 4px;
+            margin-right: 4px;
+        }
+
+        .Quitar {
+            background-color: rgb(241, 50, 50);
+        }
+
+        .Quitar:hover {
+            background-color: rgb(207, 66, 66);
+        }
+
+        .Buscar {
+            background-color: rgb(50, 50, 243);
+        }
+
+        .Buscar:hover {
+            background-color: rgb(36, 36, 204);
+        }
+
+        .Stock {
+            background-color: rgb(153, 0, 153);
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        /* Header */
+
+        header {
+            width: 100%;
+            height: 60px;
+            background: rgb(0, 51, 190);
+            position: fixed;
+            z-index: 10;
+        }
+
+        .lnr-menu {
+            font-size: 30px;
+            position: relative;
+            top: 10px;
+            left: 10px;
+            color: white;
+            border: 1px solid transparent;
+            transition: all 300ms;
+            padding: 2px;
+            cursor: pointer;
+        }
+
+        .lnr-menu:hover {
+            border: 1px solid white;
+        }
+
+        /* Menu */
+
+        .menu {
+            top: 60px;
+            width: 60px;
+            height: 100vh;
+            background: rgb(58, 58, 58);
+            overflow: hidden;
+            position: fixed;
+            transition: all 300ms;
+            z-index: 9;
+            overflow: auto;
+        }
+
+        .menu-show {
+            width: 240px;
+        }
+
+        .line {
+            margin-top: 10px;
+            padding: 10px;
+            transition: all 300ms;
+        }
+        
+        .line:hover {
+            background: rgb(0, 51, 190);
+            cursor: pointer;
+        }
+
+        .line label {
+            color: white;
+            font-size: 30px;
+            cursor: pointer;
+        }
+
+        .line font {
+            margin-left: 30px;
+            font-size: 18px;
+            font-weight: 100;
+            cursor: pointer;
+        }
+
+        /* Articulo */
+
+        main {
+            width: 90%;
+            position: absolute;
+            top: 60px;
+            left: 70px;
+            padding: 20px;
+            transition: all 300ms;
+        }
+
+        .main-move {
+            left: 250px;
+        }
+
+        article h1 {
+            font-size: 40px;
+        }
+
+        article p {
+            font-size: 20px;
+            margin-top: 20px;
+            font-weight: 100;
+        }
+
+        /* Modal */
+        #removed_item {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+
+
+        #loginModal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+
+        #loginModal-compra {
+            text-align: center;
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+
+        #loginModal-edit {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+
+        #loginModal-efectivo {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 10% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 100%;
+            max-width: 700px;
+            border-radius: 8px;
+            scrollbar-width:  thin; /* Firefox */
+            -ms-overflow-style: -ms-autohiding-scrollbar;           /* IE 10+ */
+            box-shadow: 0 4px 8px 0 rgba(0,0,0,.2),0 6px 20px 0 rgba(0,0,0,.19) !important;
+        }
+
+        .modal-content-comprar {
+            background-color: #fefefe;
+            margin: 10% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 100%;
+            max-width: 450px;
+            border-radius: 8px;
+            scrollbar-width:  thin;
+            -ms-overflow-style: -ms-autohiding-scrollbar;
+            box-shadow: 0 4px 8px 0 rgba(0,0,0,.2),0 6px 20px 0 rgba(0,0,0,.19) !important;
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            margin-top: -10px;
+        }
+
+        .close-compra {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            margin-top: -10px;
+        }
+
+        .close-efectivo {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            margin-top: -10px;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .close-compra:hover,
+        .close-compra:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .close-efectivo:hover,
+        .close-efectivo:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .close1 {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            margin-top: -10px;
+        }
+
+        .close1:hover,
+        .close1:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        h2 {
+            margin-bottom: 9px;
+            margin-top: 0;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        button[type="submit"] {
+            margin-bottom: 15px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        button[type="submit"] {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        button[type="submit"]:hover {
+            background-color: #45a049;
+        }
+
+        input[type="text"]:focus,
+        input[type="number"]:focus {
+            outline: none;
+            border-color: #4CAF50;
+        }
+
+        img {
+            max-width: 40px;
+            max-height: 40px;
+        }
+
+         /* Select */
+
+         select {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+            width: 100%;
+            margin-bottom: 15px;
+        }
+
+        select option {
+            padding: 10px;
+            font-size: 16px;
+        }
+
+        .efectivo {
+            padding: 8px 16px;
+            border: none;
+            background-color: #56dd5b;
+            color: white;
+            font-size: 14px;
+            cursor: pointer;
+            border-radius: 4px;
+            margin-left: 4px;
+            margin-right: 4px;
+            margin-bottom: 4px;
+        }
+
+        .efectivo:hover {
+            background-color: #48be4c;
+        }
+
+        .method {
+            margin-bottom: 30px;
+        }
+
+        /* Tarjeta CSS */
+
+        .tarjeta {
+            padding: 8px 16px;
+            border: none;
+            background-color: #039ece;
+            color: white;
+            font-size: 14px;
+            cursor: pointer;
+            border-radius: 4px;
+            margin: 4px;
+        }
+
+        .tarjeta:hover {
+            background-color: #008ab4;
+        }
+
+        .close-tarjeta:hover,
+        .close-tarjeta:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .close-tarjeta {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            margin-top: -10px;
+        }
+
+        #loginModal-tarjeta {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 5% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            border-radius: 8px;
+        }
+
+        .modal-content h2 {
+            margin-top: 0;
+        }
+
+        .modal-content label {
+            margin-bottom: 6px;
+            display: block;
+        }
+
+        .modal-content input[type="text"],
+        .modal-content select {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            box-sizing: border-box;
+        }
+
+        .modal-content button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .modal-content button:hover {
+            background-color: #45a049;
+        }
+
+
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <label class="lnr lnr-menu"></label>
+    </header>
+
+    <div class="menu">
+        <a href="/inicio"><div class="line"><label class="lnr lnr-home"><font>Home</font></label></div></a>
+        <a href="/inventario"><div class="line"><label class="lnr lnr-briefcase"><font>Inventory</font></label></div></a>
+        <a href="/empleados"><div class="line"><label class="lnr lnr-users"><font>Employees</font></label></div></a>
+        <a href="/bills"><div class="line"><label class="lnr lnr-file-empty"><font>Bills</font></label></div></a>
+        <a href="/customers"><div class="line"><label class="lnr lnr-user"><font>Clients</font></label></div></a>
+        <a href="/proveedor"><div class="line"><label class="lnr lnr-store"><font>Suppliers</font></label></div></a>
+        <a href="/article"><div class="line"><label class="lnr lnr-cart"><font>Articles</font></label></div></a>
+        <a href=""><div class="line"><label class="lnr lnr-chart-bars"><font>Price</font></label></div></a>
+    </div>
+
+    <main>
+        <article>
+            <h1>Articulos a Comprar</h1>
+            <table>
+                <tr>
+                    <th>Articulo</th>
+                    <th>Precio</th>
+                    <th>Itbis</th>
+                    <th>Cantidad</th>
+                    <th>Catalogo</th>
+                    <th>Operation</th>
+                </tr>
+                {% for fila in articles %}
+                <tr>
+                    <td>{{ fila.1 }}</td>
+                    <td>{{ fila.2 }}$</td>
+                    <td>{{ fila.3 }}%</td>
+                    <td>
+                        <a href="/agregar_cantidad_art/{{ fila.0 }}"><button id="Agregar">+</button></a>
+                        {{ fila.4 }}
+                        <a href="/quitar_cantidad_art/{{ fila.0 }}"><button id="remove" class="Quitar">-</button></a>
+                    </td>
+                    <td>{{ fila.5 }}</td>
+                    <td><a href="/remove_article/{{ fila.0 }}"><button class="Quitar"><i class="fa-solid fa-trash-can"></i></i></button></a></td>
+                </tr>
+                {% endfor %}
+            </table>
+            <table id = "resultados">
+                <tr>
+                    <th>Sub Total</th>
+                    <th>Total Itbis</th>
+                    <th>Total</th>
+                </tr>
+                {% for fila in calculo %}
+                <tr>
+                    <td>{{ fila.subtotal }} $</td>
+                    <td>{{ fila.itbis }} $</td>
+                    <td>{{ fila.total }} $</td>
+                </tr>
+                {% endfor %}
+            </table>
+            <table>
+                <tr>
+                    <th><button id="loginBtn" class="Agregar">Agregar Articulos a Comprar</button></th>
+                    <th><button class="Buscar" id="comprar">Comprar</button></th>
+                </tr>
+            </table>
+        </article>
+    </main>
+
+    <div id="loginModal" class="modal">
+        <div class="modal-content">
+          <span class="close">&times;</span>
+          <article>
+            <h1>Articulos en Inventario</h1>
+            <table>
+                <tr>
+                    <th>Image</th>
+                    <th>Articulo</th>
+                    <th>Precio</th>
+                    <th>Itbis</th>
+                    <th>Cantidad</th>
+                    <th>Catalogo</th>
+                    <th>Operaciones</th>
+                </tr>
+                {% for fila in datos %}
+                <tr>
+                    <td><img src="{{ url_for('static', filename='uploads/' + fila[7]) }}" alt="{{ fila.6 }}"></td>
+                    <td>{{ fila.1 }}</td>
+                    <td>{{ fila.2 }}$</td>
+                    <td>{{ fila.3 }}%</td>
+                    <td>{{ fila.4 }}</td>
+                    <td>{{ fila.6 }}</td>
+                    <td>
+                        <a href="/incluir_art/{{ fila.0 }}"><button id="edit">Incluir</button></a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+        </article>
+        </div>
+    </div>
+
+    <div id="loginModal-compra" class="modal">
+        <div class="modal-content-comprar">
+            <span class="close-compra">&times;</span>
+            <h2 class="method">Metodo de Pago</h2>
+            <label for="">Tarjeta:</label>
+            <button id="tarjeta" class="tarjeta"><i class="fa-regular fa-credit-card"></i></button>
+            <label for="">Efectivo:</label>
+            <button id="efectivo" class="efectivo"><i class="fa-solid fa-money-bill-wave"></i></button>
+        </div>
+    </div>
+
+    <div id="loginModal-tarjeta" class="modal">
+        <div class="modal-content">
+            <span class="close-tarjeta">&times;</span>
+            <h2>Compra Tarjeta</h2>
+            <form action="/pay" method="post">
+                <label for="numero_tarjeta">Número de Tarjeta:</label>
+                <input type="text" name="numero_tarjeta" id="numero_tarjeta" placeholder="Número de Tarjeta">
+                
+                <label for="nombre_titular">Nombre del Titular:</label>
+                <input type="text" name="nombre_titular" id="nombre_titular" placeholder="Nombre del Titular">
+    
+                <label for="fecha_vencimiento">Fecha de Vencimiento:</label>
+                <input type="text" name="fecha_vencimiento" id="fecha_vencimiento" placeholder="MM/AA">
+    
+                <label for="cvv">CVV:</label>
+                <input type="text" name="cvv" id="cvv" placeholder="CVV">
+
+                <label for="total">Total:</label>
+                {% for fila in calculo %}
+                    <input type="text" value="Total: {{ fila.total }}$" id="total" name="total" readonly>
+                {% endfor %}
+    
+                <label for="cliente">Cliente:</label>
+                <select name="cliente" id="cliente" required>
+                    <option value="">Seleccionar Customer</option>
+                    <optgroup label="Customers">
+                        {% for fila in customer %}
+                            <option value="{{ fila.0 }}">{{ fila.1 }}</option>
+                        {% endfor %}
+                    </optgroup>
+                </select>
+    
+                <label for="cajero">Cajero:</label>
+                <input name="cajero" type="text" value="{{ fullname }}" readonly>
+    
+                <button type="submit">Pagar</button>
+            </form> 
+        </div>
+    </div>
+    
+
+    <div id="loginModal-efectivo" class="modal">
+        <div class="modal-content">
+            <span class="close-efectivo">&times;</span>
+            <h2>Compra Efectivo</h2>
+            <form action="/payment" method="post">
+                <label for="">Monto Pagado: </label>
+                <input type="text" id="monto" name="monto" placeholder="Monto Pagado">
+
+                {% for fila in calculo %}
+                    <label for="">Total:</label>
+                    <input type="text" value="Total: {{ fila.total }}$" id="total" name="total" readonly>
+                {% endfor %}
+
+                <label for="">Cambio:</label>
+                <input type="text" value="" id="cambio" name="cambio" readonly>
+
+                <label for="">Cliente: </label>
+                <select name="cliente" id="cliente" required>
+                    <option value="">Seleccionar Customer</option>
+                    <optgroup label="Customers">
+                        {% for fila in customer %}
+                            <option value="{{ fila.0 }}">{{ fila.1 }}</option>
+                        {% endfor %}
+                    </optgroup>
+                </select>
+
+                <label for="">Cajero:</label>
+                <input type="text" value="{{ fullname }}" name="cajero" readonly>
+
+                <button type="submit">Pagar</button>
+            </form> 
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script>
+        
+        document.getElementById('monto').addEventListener('input', function() {
+            var montoText = this.value;
+            var totalText = document.getElementById('total').value;
+            var monto = parseFloat(montoText.replace('$', ''));
+            var total = parseFloat(totalText.replace('Total: ', '').replace('$', ''));
+
+            var change = monto - total;
+
+            if (!isNaN(change) && change >= 0) {
+                document.getElementById('cambio').value = "Cambio: " + change.toFixed(2) + "$";
+            } else if (change < 0) {
+                document.getElementById('cambio').value = "Cambio: 0.00$";
+            } else {
+                document.getElementById('cambio').value = "Cambio: 0.00$";
+            }
+        });
+
+        var modal = document.getElementById('loginModal');
+        var btn = document.getElementById("loginBtn");
+        var span = document.getElementsByClassName("close")[0];
+      
+        btn.onclick = function() {
+          modal.style.display = "block";
+        }
+      
+        span.onclick = function() {
+          modal.style.display = "none";
+        }
+      
+        window.onclick = function(event) {
+          if (event.target == modal) {
+            modal.style.display = "none";
+          }
+        }
+
+        var modal_comp = document.getElementById('loginModal-compra');
+        var btn_comp = document.getElementById("comprar");
+        var span_comp = document.getElementsByClassName("close-compra")[0];
+      
+        btn_comp.onclick = function() {
+            modal_comp.style.display = "block";
+        }
+      
+        span_comp.onclick = function() {
+            modal_comp.style.display = "none";
+        }
+      
+        window.onclick = function(event) {
+          if (event.target == modal_comp) {
+            modal_comp.style.display = "none";
+          }
+        }
+
+        var modal_tarjeta = document.getElementById('loginModal-tarjeta');
+        var btn_tarjeta = document.getElementById("tarjeta");
+        var span_tarjeta = document.getElementsByClassName("close-tarjeta")[0];
+      
+        btn_tarjeta.onclick = function() {
+            modal_tarjeta.style.display = "block";
+            modal_comp.style.display = "none";
+        }
+      
+        span_tarjeta.onclick = function() {
+            modal_tarjeta.style.display = "none";
+        }
+      
+        window.onclick = function(event) {
+          if (event.target == modal_tarjeta) {
+            modal_tarjeta.style.display = "none";
+          }
+        }
+
+        var modal_efectivo = document.getElementById('loginModal-efectivo');
+        var btn_efectivo = document.getElementById("efectivo");
+        var span_efectivo = document.getElementsByClassName("close-efectivo")[0];
+      
+        btn_efectivo.onclick = function() {
+            modal_efectivo.style.display = "block";
+            modal_comp.style.display = "none";
+        }
+      
+        span_efectivo.onclick = function() {
+            modal_efectivo.style.display = "none";
+        }
+      
+        window.onclick = function(event) {
+          if (event.target == modal_efectivo) {
+            modal_efectivo.style.display = "none";
+          }
+        }
+
+    </script>
+</body>
+</html>

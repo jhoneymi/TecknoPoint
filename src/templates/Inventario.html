@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdn.linearicons.com/free/1.0.0/icon-font.min.css">
+    <title>Inventario</title>
+    <link rel="icon" href="../static/img/image.png">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: sans-serif;
+        }
+
+        a {
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: none;
+        }
+
+        /* Tabla */
+
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+
+        table {
+            width: 100%;
+            margin: 20px auto;
+            border-collapse: collapse;
+            border: 1px solid #ddd;
+            background-color: #fff;
+            overflow-y: auto;
+            max-height: 200px;
+        }
+
+        th, td {
+            padding: 10px;
+            text-align: center;
+        }
+
+        th {
+            background-color: #f2f2f2;
+            border-bottom: 2px solid #ddd;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        tr:hover {
+            background-color: #f2f2f2;
+        }
+
+        button {
+            padding: 8px 16px;
+            border: none;
+            background-color: #4CAF50;
+            color: white;
+            font-size: 14px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        .Borrar {
+            background-color: rgb(241, 50, 50);
+        }
+
+        .Borrar:hover {
+            background-color: rgb(207, 66, 66);
+        }
+
+        .Buscar {
+            background-color: rgb(50, 50, 243);
+        }
+
+        .Stock {
+            background-color: rgb(153, 0, 153);
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        /* Header */
+
+        header {
+            width: 100%;
+            height: 60px;
+            background: rgb(0, 51, 190);
+            position: fixed;
+            z-index: 10;
+        }
+
+        .lnr-menu {
+            font-size: 30px;
+            position: relative;
+            top: 10px;
+            left: 10px;
+            color: white;
+            border: 1px solid transparent;
+            transition: all 300ms;
+            padding: 2px;
+            cursor: pointer;
+        }
+
+        .lnr-menu:hover {
+            border: 1px solid white;
+        }
+
+        /* Menu */
+
+        .menu {
+            top: 60px;
+            width: 60px;
+            height: 100vh;
+            background: rgb(58, 58, 58);
+            overflow: hidden;
+            position: fixed;
+            transition: all 300ms;
+            z-index: 9;
+            overflow: auto;
+        }
+
+        .menu-show {
+            width: 240px;
+        }
+
+        .line {
+            margin-top: 10px;
+            padding: 10px;
+            transition: all 300ms;
+        }
+        
+        .line:hover {
+            background: rgb(0, 51, 190);
+            cursor: pointer;
+        }
+
+        .line label {
+            color: white;
+            font-size: 30px;
+            cursor: pointer;
+        }
+
+        .line font {
+            margin-left: 30px;
+            font-size: 18px;
+            font-weight: 100;
+            cursor: pointer;
+        }
+
+        /* Articulo */
+
+        main {
+            width: 90%;
+            position: absolute;
+            top: 60px;
+            left: 70px;
+            padding: 20px;
+            transition: all 300ms;
+        }
+
+        .main-move {
+            left: 250px;
+        }
+
+        article h1 {
+            font-size: 40px;
+        }
+
+        article p {
+            font-size: 20px;
+            margin-top: 20px;
+            font-weight: 100;
+        }
+
+        /* Modal */
+        #removed_item {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+
+
+        #loginModal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+
+        #loginModal-1 {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+        
+        #loginModal-reabastecer {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 10% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 450px;
+            border-radius: 8px;
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            margin-top: -10px;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .close-1 {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            margin-top: -10px;
+        }
+
+        .close-1:hover,
+        .close-1:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .close-reabastecer {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            margin-top: -10px;
+        }
+
+        .close-reabastecer:hover,
+        .close-reabastecer:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        h2 {
+            margin-bottom: 9px;
+            margin-top: 0;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        button[type="submit"] {
+            margin-bottom: 15px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        button[type="submit"] {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        button[type="submit"]:hover {
+            background-color: #45a049;
+        }
+
+        input[type="text"]:focus,
+        input[type="number"]:focus {
+            outline: none;
+            border-color: #4CAF50;
+        }
+
+        img {
+            max-width: 70px;
+            max-height: 70px;
+        }
+
+        /* Select */
+
+        select#categorias {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+            width: 100%;
+            margin-bottom: 15px;
+        }
+
+        select#categorias option {
+            padding: 10px;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <label class="lnr lnr-menu"></label>
+    </header>
+
+    <div class="menu">
+        <a href="/inicio"><div class="line"><label class="lnr lnr-home"><font>Home</font></label></div></a>
+        <a href="/inventario"><div class="line"><label class="lnr lnr-briefcase"><font>Inventory</font></label></div></a>
+        <a href="/empleados"><div class="line"><label class="lnr lnr-users"><font>Employees</font></label></div></a>
+        <a href="/bills"><div class="line"><label class="lnr lnr-file-empty"><font>Bills</font></label></div></a>
+        <a href="/customers"><div class="line"><label class="lnr lnr-user"><font>Clients</font></label></div></a>
+        <a href="/proveedor"><div class="line"><label class="lnr lnr-store"><font>Suppliers</font></label></div></a>
+        <a href="/article"><div class="line"><label class="lnr lnr-cart"><font>Articles</font></label></div></a>
+        <a href=""><div class="line"><label class="lnr lnr-chart-bars"><font>Price</font></label></div></a>
+    </div>
+
+    <main>
+        <article>
+            <h1>Articulos en Inventario</h1>
+            <table>
+                <tr>
+                    <th>Image</th>
+                    <th>Articulo</th>
+                    <th>Precio</th>
+                    <th>Itbis</th>
+                    <th>Cantidad</th>
+                    <th>Catalogo</th>
+                    <th>Operaciones</th>
+                    <!-- Agrega más columnas según tu esquema de base de datos -->
+                </tr>
+                {% for fila in datos %}
+                <tr>
+                    <td><img src="{{ url_for('static', filename='uploads/' + fila[7]) }}" alt="{{ fila.6 }}"></td>
+                    <td>{{ fila.1 }}</td>
+                    <td>{{ fila.2 }}$</td>
+                    <td>{{ fila.3 }}%</td>
+                    <td>{{ fila.4 }}</td>
+                    <td>{{ fila.6 }}</td>
+                    <td>
+                        <a href="/edit/{{ fila.0 }}"><button id="edit">Editar</button></a>
+                        <a href="/remove_art/{{ fila.0 }}"><button id="remove" class="Borrar">Borrar</button></a>
+                    </td>
+                    <!-- Agrega más celdas según tu esquema de base de datos -->
+                </tr>
+                {% endfor %}
+            </table>
+            <table>
+                <tr>
+                    <th><button id="loginBtn" class="Agregar">Agregar Articulo</button></th>
+                    <th><button class="Stock">Actualizar Stock de Articulo</button></th>
+                    <th><button class="Buscar" id="SearchBtn">Buscar Articulo por Nombre</button></th>
+                </tr>
+            </table>
+        </article>
+    </main>
+
+    <div id="loginModal" class="modal">
+        <div class="modal-content">
+          <span class="close">&times;</span>
+          <h2>Agregar Articulo</h2>
+          <form method="post" action="{{ url_for('add_article') }}" enctype="multipart/form-data">
+            <input type="text" id="art_name" name="art_name" placeholder="Nombre del artículo" required>
+            <input type="number" step="any" id="art_precio" name="art_precio" placeholder="Precio del artículo" required>
+            <input type="number" step="any" id="art_itbis" name="art_itbis" placeholder="Impuesto (%)" required>
+            <input type="number" step="any" id="art_cantidad" name="art_cantidad" placeholder="Ingrese la cantidad del artículo" required>
+            <select id="categorias" name="catalogo">
+                <option value="">Seleccionar...</option>
+                <optgroup label="Computadoras">
+                  <option value="desktop">Computadoras de escritorio</option>
+                  <option value="laptop">Laptops (Portátiles)</option>
+                  <option value="mini-pc">Mini PC</option>
+                </optgroup>
+                <optgroup label="Componentes internos">
+                  <option value="cpu">Procesadores (CPU)</option>
+                  <option value="gpu">Tarjetas gráficas (GPU)</option>
+                  <option value="motherboard">Placas base (Motherboards)</option>
+                  <option value="ram">Memoria RAM</option>
+                  <option value="storage">Almacenamiento (HDD, SSD, NVMe)</option>
+                  <option value="power">Fuentes de alimentación (PSU)</option>
+                  <option value="coling">Refrigeración (ventiladores, disipadores de calor, sistemas de refrigeración líquida)</option>
+                </optgroup>
+                <optgroup label="Periféricos">
+                  <option value="monitor">Monitores</option>
+                  <option value="keyboard">Teclados</option>
+                  <option value="mouse">Ratones (Mouses)</option>
+                  <option value="head_and_mic">Auriculares y micrófonos</option>
+                  <option value="speakers">Altavoces</option>
+                  <option value="Webcam">Cámaras web</option>
+                  <option value="Printer">Impresoras y escáneres</option>
+                </optgroup>
+                <optgroup label="Accesorios">
+                    <option value="laptop_sleeve">Fundas para laptops</option>
+                    <option value="briefcase">Maletines y mochilas</option>
+                    <option value="monitor_stand">Soportes para monitores</option>
+                    <option value="ergonomic_mice">Ratones ergonómicos</option>
+                    <option value="mechanical_keyboard">Teclados mecánicos</option>
+                    <option value="mouse_pad">Alfombrillas para ratón</option>
+                </optgroup>
+                <optgroup label="Software">
+                    <option value="operating_system">Sistemas operativos (Windows, macOS, Linux)</option>
+                    <option value="office_suite">Suites de oficina (Microsoft Office, LibreOffice)</option>
+                    <option value="antivirus">Antivirus y software de seguridad</option>
+                    <option value="design_software">Software de diseño (Adobe Creative Suite, AutoCAD)</option>
+                    <option value="video_and_audio_software">Software de edición de video y audio (Adobe Premiere, Audacity)</option>
+                </optgroup>
+                <optgroup label="Componentes de red">
+                    <option value="router">Routers</option>
+                    <option value="switche">Switches</option>
+                    <option value="card_of_red">Tarjetas de red (Wi-Fi y Ethernet)</option>
+                    <option value="network_adapter">Adaptadores de red (USB Wi-Fi, PLC)</option>
+                </optgroup>
+                <optgroup label="Dispositivos de almacenamiento externo">
+                    <option value="usb">Unidades flash USB</option>
+                    <option value="external_hard">Discos duros externos</option>
+                    <option value="external_solid">Unidades de estado sólido externas</option>
+                    <option value="SD">Tarjetas de memoria (SD, microSD)</option>
+                </optgroup>
+                <optgroup label="Componentes para gaming">
+                    <option value="gaming_keyboard">Teclados gaming</option>
+                    <option value="gaming_mice">Ratones gaming</option>
+                    <option value="gaming_headphone">Auriculares gaming</option>
+                    <option value="gaming_chair">Sillas gaming</option>
+                    <option value="gaming_monitor">Monitores gaming</option>
+                </optgroup>
+                <input type="file" name="image" accept="image/*" required>
+            </select>
+            <button type="submit">Agregar</button>
+          </form>
+        </div>
+    </div>
+
+    <div id="loginModal-1" class="modal">
+        <div class="modal-content">
+          <span class="close-1">&times;</span>
+          <h2>Search Employed</h2>
+            <input type="text" id="busqueda" placeholder="Buscar...">
+            <ul id="resultados"></ul>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script>
+        $('.lnr-menu').on('click', function() {
+            $('.menu').toggleClass("menu-show");
+            $('main').toggleClass("main-move")
+        });
+
+        var modal = document.getElementById('loginModal');
+        var btn = document.getElementById("loginBtn");
+        var span = document.getElementsByClassName("close")[0];
+      
+        btn.onclick = function() {
+            modal.style.display = "block";
+        }
+      
+        span.onclick = function() {
+            modal.style.display = "none";
+        }
+      
+        window.onclick = function(event) {
+          if (event.target == modal) {
+            modal.style.display = "none";
+          }
+        }
+
+        var modal_search = document.getElementById('loginModal-1');
+        var btn_search = document.getElementById("SearchBtn");
+        var span_search = document.getElementsByClassName("close-1")[0];
+      
+        btn_search.onclick = function() {
+            modal_search.style.display = "block";
+        }
+      
+        span_search.onclick = function() {
+            modal_search.style.display = "none";
+        }
+      
+        window.onclick = function(event) {
+          if (event.target == modal_search) {
+            modal_search.style.display = "none";
+          }
+        }
+
+
+        // Realiza la búsqueda en tiempo real
+        $(document).ready(function(){
+            $('#busqueda').on('input', function(){
+                var query = $(this).val();
+                $.ajax({
+                    url: '/buscar',
+                    method: 'POST',
+                    data: {query: query},
+                    success: function(response){
+                        $('#resultados').empty();
+                        response.forEach(function(resultado){
+                            $('#resultados').append('<li>' + resultado + '</li>');
+                        });
+                    }
+                });
+            });
+        });
+
+    </script>
+</body>
+</html>

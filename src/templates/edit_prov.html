@@ -1,0 +1,307 @@
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: sans-serif;
+    }
+
+    h1 {
+        text-align: center;
+        color: #333;
+    }
+
+    table {
+        width: 100%;
+        margin: 20px auto;
+        border-collapse: collapse;
+        border: 1px solid #ddd;
+        background-color: #fff;
+    }
+
+    th, td {
+        padding: 10px;
+        text-align: left;
+    }
+
+    th {
+        background-color: #f2f2f2;
+        border-bottom: 2px solid #ddd;
+    }
+
+    tr:nth-child(even) {
+        background-color: #f9f9f9;
+    }
+
+    tr:hover {
+        background-color: #f2f2f2;
+    }
+
+    button {
+        padding: 8px 16px;
+        border: none;
+        background-color: #4CAF50;
+        color: white;
+        font-size: 14px;
+        cursor: pointer;
+        border-radius: 4px;
+    }
+
+    .Borrar {
+        background-color: rgb(241, 50, 50);
+    }
+
+    .Borrar:hover {
+        background-color: rgb(207, 66, 66);
+    }
+
+    .Buscar {
+        background-color: rgb(50, 50, 243);
+    }
+
+    .Stock {
+        background-color: rgb(153, 0, 153);
+    }
+
+    button:hover {
+        background-color: #45a049;
+    }
+
+    /* Header */
+
+    header {
+        width: 100%;
+        height: 60px;
+        background: rgb(0, 51, 190);
+        position: fixed;
+        z-index: 10;
+    }
+
+    .lnr-menu {
+        font-size: 30px;
+        position: relative;
+        top: 10px;
+        left: 10px;
+        color: white;
+        border: 1px solid transparent;
+        transition: all 300ms;
+        padding: 2px;
+        cursor: pointer;
+    }
+
+    .lnr-menu:hover {
+        border: 1px solid white;
+    }
+
+    /* Menu */
+
+    .menu {
+        top: 60px;
+        width: 60px;
+        height: 100vh;
+        background: rgb(58, 58, 58);
+        overflow: hidden;
+        position: fixed;
+        transition: all 300ms;
+        z-index: 9;
+        overflow: auto;
+    }
+
+    .menu-show {
+        width: 240px;
+    }
+
+    .line {
+        margin-top: 10px;
+        padding: 10px;
+        transition: all 300ms;
+    }
+    
+    .line:hover {
+        background: rgb(0, 51, 190);
+        cursor: pointer;
+    }
+
+    .line label {
+        color: white;
+        font-size: 30px;
+        cursor: pointer;
+    }
+
+    .line font {
+        margin-left: 30px;
+        font-size: 18px;
+        font-weight: 100;
+        cursor: pointer;
+    }
+
+    /* Articulo */
+
+    main {
+        width: 80%;
+        position: absolute;
+        top: 60px;
+        left: 70px;
+        padding: 20px;
+        transition: all 300ms;
+    }
+
+    .main-move {
+        left: 250px;
+    }
+
+    article h1 {
+        font-size: 40px;
+    }
+
+    article p {
+        font-size: 20px;
+        margin-top: 20px;
+        font-weight: 100;
+    }
+
+    /* Modal */
+    #removed_item {
+        display: none;
+        position: fixed;
+        z-index: 1;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgba(0,0,0,0.4);
+    }
+
+
+    #loginModal {
+        display: none;
+        position: fixed;
+        z-index: 1;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgba(0,0,0,0.4);
+    }
+
+    #loginModal-edit {
+        display: block;
+        position: fixed;
+        z-index: 1;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgba(0,0,0,0.4);
+    }
+
+    .modal-content {
+        background-color: #fefefe;
+        margin: 10% auto;
+        padding: 20px;
+        border: 1px solid #888;
+        width: 80%;
+        max-width: 450px;
+        border-radius: 8px;
+    }
+
+    .close {
+        color: #aaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+        margin-top: -10px;
+    }
+
+    .close:hover,
+    .close:focus {
+        color: black;
+        text-decoration: none;
+        cursor: pointer;
+    }
+
+    .close1 {
+        color: #aaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+        margin-top: -10px;
+    }
+
+    .close1:hover,
+    .close1:focus {
+        color: black;
+        text-decoration: none;
+        cursor: pointer;
+    }
+
+    h2 {
+        margin-bottom: 9px;
+        margin-top: 0;
+    }
+
+    form {
+        display: flex;
+        flex-direction: column;
+    }
+
+    input[type="text"],
+    input[type="number"],
+    button[type="submit"] {
+        margin-bottom: 15px;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        font-size: 16px;
+    }
+
+    button[type="submit"] {
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        cursor: pointer;
+    }
+
+    button[type="submit"]:hover {
+        background-color: #45a049;
+    }
+
+    input[type="text"]:focus,
+    input[type="number"]:focus {
+        outline: none;
+        border-color: #4CAF50;
+    }
+
+    /* Select */
+
+    select#categorias {
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        font-size: 16px;
+        width: 100%;
+        margin-bottom: 15px;
+    }
+
+    select#categorias option {
+        padding: 10px;
+        font-size: 16px;
+    }
+</style>
+
+<div id="loginModal-edit" class="modal">
+    <div class="modal-content">
+      <span id="close-edit" class="close">&times;</span>
+      <h2>Modify Supplier</h2>
+      <form method="post" action="/update_prov/{{ datos.0 }}">
+        <input type="text" id="prov_name" name="prov_name" placeholder="Supplier Name" required value="{{ datos.1 }}">
+        <input type="text" id="prov_address" name="prov_address" placeholder="Supplier Address" required value="{{ datos.2 }}">
+        <input type="text" id="prov_phone" name="prov_phone" placeholder="Supplier Phone" required value="{{ datos.3 }}">
+        <input type="text" id="prov_email" name="prov_email" placeholder="Supplier Email" required value="{{ datos.4 }}">
+        <button type="submit">Updated</button>
+      </form>
+    </div>
+</div>
