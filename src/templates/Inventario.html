@@ -359,6 +359,7 @@
         <a href="/proveedor"><div class="line"><label class="lnr lnr-store"><font>Suppliers</font></label></div></a>
         <a href="/article"><div class="line"><label class="lnr lnr-cart"><font>Articles</font></label></div></a>
         <a href=""><div class="line"><label class="lnr lnr-chart-bars"><font>Price</font></label></div></a>
+        <a href="/history"><div class="line"><label class="lnr lnr-book"><font>Historico</font></label></div></a>
     </div>
 
     <main>
@@ -375,21 +376,31 @@
                     <th>Operaciones</th>
                     <!-- Agrega más columnas según tu esquema de base de datos -->
                 </tr>
-                {% for fila in datos %}
-                <tr>
-                    <td><img src="{{ url_for('static', filename='uploads/' + fila[7]) }}" alt="{{ fila.6 }}"></td>
-                    <td>{{ fila.1 }}</td>
-                    <td>{{ fila.2 }}$</td>
-                    <td>{{ fila.3 }}%</td>
-                    <td>{{ fila.4 }}</td>
-                    <td>{{ fila.6 }}</td>
-                    <td>
-                        <a href="/edit/{{ fila.0 }}"><button id="edit">Editar</button></a>
-                        <a href="/remove_art/{{ fila.0 }}"><button id="remove" class="Borrar">Borrar</button></a>
-                    </td>
-                    <!-- Agrega más celdas según tu esquema de base de datos -->
-                </tr>
-                {% endfor %}
+                {% if datos %}
+                    {% for fila in datos %}
+                    <tr>
+                        <td><img src="{{ url_for('static', filename='uploads/' + fila[7]) }}" alt="{{ fila.6 }}"></td>
+                        <td>{{ fila.1 }}</td>
+                        <td>{{ fila.2 }}$</td>
+                        <td>{{ fila.3 }}%</td>
+                        <td>{{ fila.4 }}</td>
+                        <td>{{ fila.6 }}</td>
+                        <td>
+                            <a href="/edit/{{ fila.0 }}"><button id="edit">Editar</button></a>
+                            <a href="/remove_art/{{ fila.0 }}"><button id="remove" class="Borrar">Borrar</button></a>
+                        </td>
+                        <!-- Agrega más celdas según tu esquema de base de datos -->
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="7">
+                            <div class="div">
+                                <p>No hay productos</p>
+                            </div>
+                        </td>
+                    </tr>
+                {% endif %}
             </table>
             <table>
                 <tr>

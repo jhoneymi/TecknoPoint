@@ -500,22 +500,7 @@
             background-color: #45a049;
         }
 
-        .div {
-            background-color: #f0f0f0; /* Color de fondo */
-            padding: 20px; /* Espaciado interno */
-            border-radius: 10px; /* Borde redondeado */
-            border: 1px solid #ccc; /* Borde con color */
-            margin: 20px auto; /* Margen superior e inferior de 20px, centrado horizontalmente */
-            width: 80%; /* Ancho del 80% del contenedor padre */
-            max-width: 600px; /* Ancho máximo */
-            text-align: center; /* Centrar el contenido del div */
-        }
 
-        .div p {
-            margin: 0; /* Eliminar el margen del párrafo */
-            font-size: 18px; /* Tamaño de fuente */
-            color: rgba(51, 51, 51, 0.7); /* Color del texto con opacidad */
-        }
 
     </style>
 </head>
@@ -526,15 +511,10 @@
     </header>
 
     <div class="menu">
-        <a href="/inicio"><div class="line"><label class="lnr lnr-home"><font>Home</font></label></div></a>
-        <a href="/inventario"><div class="line"><label class="lnr lnr-briefcase"><font>Inventory</font></label></div></a>
-        <a href="/empleados"><div class="line"><label class="lnr lnr-users"><font>Employees</font></label></div></a>
-        <a href="/bills"><div class="line"><label class="lnr lnr-file-empty"><font>Bills</font></label></div></a>
-        <a href="/customers"><div class="line"><label class="lnr lnr-user"><font>Clients</font></label></div></a>
-        <a href="/proveedor"><div class="line"><label class="lnr lnr-store"><font>Suppliers</font></label></div></a>
-        <a href="/article"><div class="line"><label class="lnr lnr-cart"><font>Articles</font></label></div></a>
+        <a href="/inicio_emp"><div class="line"><label class="lnr lnr-home"><font>Home</font></label></div></a>
+        <a href="/bills_emp"><div class="line"><label class="lnr lnr-file-empty"><font>Bills</font></label></div></a>
+        <a href="/article_emp"><div class="line"><label class="lnr lnr-cart"><font>Articles</font></label></div></a>
         <a href=""><div class="line"><label class="lnr lnr-chart-bars"><font>Price</font></label></div></a>
-        <a href="/history"><div class="line"><label class="lnr lnr-book"><font>Historico</font></label></div></a>
     </div>
 
     <main>
@@ -549,30 +529,20 @@
                     <th>Catalogo</th>
                     <th>Operation</th>
                 </tr>
-                {% if articles %}
-                    {% for fila in articles %}
-                        <tr>
-                            <td>{{ fila.1 }}</td>
-                            <td>{{ fila.2 }}$</td>
-                            <td>{{ fila.3 }}%</td>
-                            <td>
-                                <a href="/agregar_cantidad_art/{{ fila.0 }}"><button id="Agregar">+</button></a>
-                                {{ fila.4 }}
-                                <a href="/quitar_cantidad_art/{{ fila.0 }}"><button id="remove" class="Quitar">-</button></a>
-                            </td>
-                            <td>{{ fila.5 }}</td>
-                            <td><a href="/remove_article/{{ fila.0 }}"><button class="Quitar"><i class="fa-solid fa-trash-can"></i></i></button></a></td>
-                        </tr>
-                    {% endfor %}
-                {% else %}
-                    <tr>
-                        <td colspan="6">
-                            <div class="div">
-                                <p>No hay articulos para comprar </p>
-                            </div>
-                        </td>
-                    </tr>
-                {% endif %}
+                {% for fila in articles %}
+                <tr>
+                    <td>{{ fila.1 }}</td>
+                    <td>{{ fila.2 }}$</td>
+                    <td>{{ fila.3 }}%</td>
+                    <td>
+                        <a href="/agregar_cantidad_art_emp/{{ fila.0 }}"><button id="Agregar">+</button></a>
+                        {{ fila.4 }}
+                        <a href="/quitar_cantidad_art_emp/{{ fila.0 }}"><button id="remove" class="Quitar">-</button></a>
+                    </td>
+                    <td>{{ fila.5 }}</td>
+                    <td><a href="/remove_article_emp/{{ fila.0 }}"><button class="Quitar"><i class="fa-solid fa-trash-can"></i></i></button></a></td>
+                </tr>
+                {% endfor %}
             </table>
             <table id = "resultados">
                 <tr>
@@ -612,29 +582,19 @@
                     <th>Catalogo</th>
                     <th>Operaciones</th>
                 </tr>
-                {% if datos %}
-                    {% for fila in datos %}
-                    <tr>
-                        <td><img src="{{ url_for('static', filename='uploads/' + fila[7]) }}" alt="{{ fila.6 }}"></td>
-                        <td>{{ fila.1 }}</td>
-                        <td>{{ fila.2 }}$</td>
-                        <td>{{ fila.3 }}%</td>
-                        <td>{{ fila.4 }}</td>
-                        <td>{{ fila.6 }}</td>
-                        <td>
-                            <a href="/incluir_art/{{ fila.0 }}"><button id="edit">Incluir</button></a>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                {% else %}
-                    <tr>
-                        <td colspan="7">
-                            <div class="div">
-                                <p>No hay productos en Inventario</p>
-                            </div>
-                        </td>
-                    </tr>
-                {% endif %}
+                {% for fila in datos %}
+                <tr>
+                    <td><img src="{{ url_for('static', filename='uploads/' + fila[7]) }}" alt="{{ fila.6 }}"></td>
+                    <td>{{ fila.1 }}</td>
+                    <td>{{ fila.2 }}$</td>
+                    <td>{{ fila.3 }}%</td>
+                    <td>{{ fila.4 }}</td>
+                    <td>{{ fila.6 }}</td>
+                    <td>
+                        <a href="/incluir_art_emp/{{ fila.0 }}"><button id="edit">Incluir</button></a>
+                    </td>
+                </tr>
+                {% endfor %}
             </table>
         </article>
         </div>
@@ -655,7 +615,7 @@
         <div class="modal-content">
             <span class="close-tarjeta">&times;</span>
             <h2>Compra Tarjeta</h2>
-            <form action="/pay" method="post">
+            <form action="/pay_emp" method="post">
                 <label for="numero_tarjeta">Número de Tarjeta:</label>
                 <input type="text" name="numero_tarjeta" id="numero_tarjeta" placeholder="Número de Tarjeta">
                 
@@ -696,7 +656,7 @@
         <div class="modal-content">
             <span class="close-efectivo">&times;</span>
             <h2>Compra Efectivo</h2>
-            <form action="/payment" method="post">
+            <form action="/payment_emp" method="post">
                 <label for="">Monto Pagado: </label>
                 <input type="text" id="monto" name="monto" placeholder="Monto Pagado">
 

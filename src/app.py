@@ -10,7 +10,7 @@ import os
 import pdfkit
 
 # Libreria par el tiempo
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import random
 import string
@@ -41,11 +41,16 @@ app.config['UPLOAD_FOLDER'] = 'src/static/uploads'
 mysql = MySQL(app)
 
 #^ Cierre de Caja
-@app.route('/cierre')
+@app.route('/cierre', methods = ['POST','GET'])
 def cierre():
+
+    id_C = CIBC()
+
     cur = mysql.connection.cursor()
-    cur.execute("SELECT * FROM bills")
+    cur.execute("SELECT * FROM bills WHERE estado = %s",(1))
     bills = cur.fetchall()
+
+    observaciones = request.form['observacion']
 
     fechahora = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     totalingresos = 0
@@ -53,16 +58,17 @@ def cierre():
     totaltarjeta = 0
     totalefectivo = 0
     totaldevoluciones = 0
-    observaciones = ""
     arqueocaja = 0
 
-    cur.execute("SELECT * FROM closing_box")
-    data = cur.fetchone()
+    cur.execute("SELECT * FROM closing_box ORDER BY fechahora DESC LIMIT 1")
+    last_insertion = cur.fetchone()
 
-    saldo = data[2]
-
-    if saldo > 0:
-        saldoinicial = saldo
+    if last_insertion:
+        saldo = last_insertion[2]
+        if saldo is not None and saldo > 0:
+            saldoinicial = saldo
+        else:
+            saldoinicial = 10000
     else:
         saldoinicial = 10000
 
@@ -81,17 +87,38 @@ def cierre():
             totalefectivo += total_bill
         else:
             flash("Hubo un error")
-            
-        return render_template('bills.htmls')
-    
-    cur.execute("INSERT INTO closing_box (fechahora, saldoinicial, totalingresos, totalegresos, totalventasefectivo, totalventastarjeta, totaldevoluciones, arqueocaja, observaciones) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)",
-                (fechahora, saldoinicial, totalingresos, totalegresos, totalefectivo, totaltarjeta, totaldevoluciones, arqueocaja, observaciones))
-    mysql.connection.commit()
 
-    cur.execute("DELETE FROM bills")
+    saldo_final = saldoinicial + totalingresos - totalegresos
+    
+    arqueocaja = saldo_final - saldoinicial
+            
+    
+    cur.execute("INSERT INTO closing_box (id_closing, fechahora, saldoinicial, totalingresos, totalegresos, totalventasefectivo, totalventastarjeta, totaldevoluciones, arqueocaja, observaciones) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
+                (id_C, fechahora, saldoinicial, totalingresos, totalegresos, totalefectivo, totaltarjeta, totaldevoluciones, arqueocaja, observaciones))
+    mysql.connection.commit()
+    cur.close
+
+    cur.execute("UPDATE bills SET estado = %s",('2'))
     mysql.connection.commit()
     cur.close()
-    
+
+    return redirect(url_for('bill'))
+
+def CIBC():
+    con = mysql.connection
+    cur = con.cursor()
+    cur.execute("SELECT MAX(id_closing) FROM closing_box")
+
+    resultado = cur.fetchone()
+
+    if resultado is None or resultado[0] is None:
+        next_bill = 1
+    else:
+        next_bill = resultado[0] + 1
+    cur.close()
+
+    return next_bill
+
 
 #~ PDF
 @app.route('/generar_pdf')
@@ -160,14 +187,14 @@ def pay():
 
     if tarjeta:
         fecha_hora = datetime.now()
-        fecha_hora_formateada = fecha_hora.strftime("%Y-%m-%d")
+        fecha_hora_formateada = fecha_hora.strftime("%Y-%m-%d %H:%M:%S")
 
         number_bill = GNF()
 
         cur = mysql.connection.cursor()
-        cur.execute("""INSERT INTO bills (id, date, number_bill, customer, discount, way_to_pay, `change`, cashier, rnc_client_bill, ubicacion, contacto, total_general) 
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
-                        (new_id, fecha_hora_formateada, number_bill, customer, "0", "Tarjeta", "0", cajero, rnc, ubicacion, contacto, total_general))
+        cur.execute("""INSERT INTO bills (id, date, number_bill, customer, discount, way_to_pay, `change`, cashier, rnc_client_bill, ubicacion, contacto, total_general, estado) 
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
+                        (new_id, fecha_hora_formateada, number_bill, customer, "0", "Tarjeta", "0", cajero, rnc, ubicacion, contacto, total_general, 1))
         mysql.connection.commit()
         APB(new_id)
 
@@ -270,7 +297,7 @@ def payment():
     # Obtener los datos del formulario
     cliente = request.form['cliente']
     cajero = request.form['cajero']
-    cambio = request.form['cambio']
+    monto = request.form['monto']
     total = request.form['total']
 
     # Obtener los datos del cliente
@@ -291,17 +318,22 @@ def payment():
     total_sin_dolar = numero.strip('$')
     total_general = str(total_sin_dolar)
 
+    total_float = float(total_general)
+    monto_float = float(monto)
+
+    cambio = monto_float - total_float
+
     new_id = CIBE()
 
     fecha_hora = datetime.now()
-    fecha_hora_formateada = fecha_hora.strftime("%Y-%m-%d")
+    fecha_hora_formateada = fecha_hora.strftime("%Y-%m-%d %H:%M:%S")
 
     number_bill = GNFE()
 
     cur = mysql.connection.cursor()
-    cur.execute("""INSERT INTO bills (id, date, number_bill, customer, discount, way_to_pay, `change`, cashier, rnc_client_bill, ubicacion, contacto, total_general) 
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
-                    (new_id, fecha_hora_formateada, number_bill, customer, "0", "Efectivo", cambio, cajero, rnc, ubicacion, contacto, total_general))
+    cur.execute("""INSERT INTO bills (id, date, number_bill, customer, discount, way_to_pay, `change`, cashier, rnc_client_bill, ubicacion, contacto, total_general, estado) 
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
+                    (new_id, fecha_hora_formateada, number_bill, customer, "0", "Efectivo", cambio, cajero, rnc, ubicacion, contacto, total_general, 1))
     mysql.connection.commit()
     APBE(new_id)
 
@@ -473,6 +505,20 @@ class MyNamespace(Namespace):
 
 socketio.on_namespace(MyNamespace('/my_namespace'))
 
+#! History
+@app.route('/history', methods=['GET','POST'])
+def history():
+    historys = obtener_historys()
+    return render_template('history.html', history = historys)
+
+def obtener_historys():
+    cur = mysql.connection.cursor()
+    cur.execute("SELECT * FROM bills WHERE estado = %s",("2"))
+    data = cur.fetchall()
+    cur.close()
+
+    return data
+
 #* Bills
 @app.route('/bills', methods=['GET','POST'])
 def bill():
@@ -482,7 +528,7 @@ def bill():
 @app.route('/bills_table')
 def obtener_bills():
     cur = mysql.connection.cursor()
-    cur.execute("SELECT * FROM bills")
+    cur.execute("SELECT * FROM bills WHERE estado = %s",("1"))
     data = cur.fetchall()
     cur.close()
 
@@ -515,8 +561,13 @@ def factura_detalle(id):
     
     # Formatear los números total_general e itbis con dos decimales
     total_general_formatted = "{:.2f}".format(total_general)
+    
+    for fila in bill:
+        fecha_N = fila[1]
 
-    return render_template("detalle.html", bill=bill, detail=detail, total_general=total_general_formatted)
+    fecha_V = fecha_N + timedelta(days=30)
+
+    return render_template("detalle.html", bill=bill, detail=detail, total_general=total_general_formatted, fecha = fecha_V)
 
 #TODO Customers
 @app.route('/customers')
@@ -916,17 +967,18 @@ def login():
                     return redirect(url_for('inicio'))
                 elif session['role_id'] == 3:
                     cur = mysql.connection.cursor()
-                    cur.execute('SELECT * FROM time WHERE id_users = %s',(session['id']))
+                    cur.execute('SELECT * FROM time WHERE id_users = %s',(session_id))
                     duplicate = cur.fetchall()
 
                     if duplicate:
                         cur = mysql.connection.cursor()
-                        cur.execute('UPDATE time SET entry_date = %s WHERE id_users = %s',(fecha_hora_formateada,session['id']))
+                        cur.execute('UPDATE time SET entry_date = %s WHERE id_users = %s',(fecha_hora_formateada,session_id))
                         mysql.connection.commit()
                     else:
                         cur = mysql.connection.cursor()
-                        cur.execute('INSERT INTO time (id_users, entry_date) VALUES (%s, %s)',(session['id'], fecha_hora_formateada))
+                        cur.execute('INSERT INTO time (id_users, entry_date) VALUES (%s, %s)',(session_id, fecha_hora_formateada))
                         mysql.connection.commit()
+
                     return redirect(url_for('inicio_emp'))
                 else:
                     return redirect(url_for('login'))
@@ -1061,6 +1113,396 @@ def  add_prov():
 @app.route('/inicio_emp')
 def inicio_emp():
     return render_template('/inicio_emp.html')
+
+@app.route('/bills_emp')
+def bill_emp():
+    bills = obtener_bills_emp()
+    return render_template('bills_emp.html', bills = bills)
+
+@app.route('/bills_table')
+def obtener_bills_emp():
+    if 'fullname' in session:
+        fullname = session['fullname']
+    cur = mysql.connection.cursor()
+    cur.execute("SELECT * FROM bills WHERE estado = %s AND cashier = %s",("1", fullname))
+    data = cur.fetchall()
+    cur.close()
+
+    return data
+
+@app.route('/factura_detalle_emp/<id>')
+def factura_detalle_emp(id):
+    cur = mysql.connection.cursor()
+    cur.execute("SELECT * FROM bills WHERE id = %s",(id,))
+    bill = cur.fetchall()
+    cur.close()
+
+    cursor = mysql.connection.cursor()
+    cursor.execute("SELECT * FROM art_bill WHERE id_bills = %s",(id,))
+    detail = cursor.fetchall()
+    cursor.close()
+
+    total_general = 0
+
+    for fila in detail:
+        art_price = fila[3]
+        art_itbis = fila[4]
+        art_mount = fila[5]
+
+        subtotal = art_mount * art_price
+        itbis = subtotal + ( subtotal * art_itbis / 100)
+
+        # Calcular el total general sumando subtotal e ITBIS de cada producto
+        total_general += itbis
+    
+    # Formatear los números total_general e itbis con dos decimales
+    total_general_formatted = "{:.2f}".format(total_general)
+    
+    for fila in bill:
+        fecha_N = fila[1]
+
+    fecha_V = fecha_N + timedelta(days=30)
+
+    return render_template("detalle_emp.html", bill=bill, detail=detail, total_general=total_general_formatted, fecha = fecha_V)
+
+@app.route('/article_emp')
+def article_emp():
+    datos = obtener_datos_inv()
+    articles = obtener_articles_emp()
+    customer = obtener_customer()
+    employees = obtener_datos_emp()
+    calculo = calculos_emp()
+    return render_template('articles_emp.html', datos = datos, articles = articles, calculo = calculo, customer = customer, emp = employees, fullname = session['fullname'])
+
+@app.route('/calculos_emp')
+def calculos_emp():
+    cur = mysql.connection.cursor()
+    cur.execute('SELECT * FROM articles')
+    cal = cur.fetchall()
+
+    resultados = []
+
+    total_price = 0
+    total_itbis = 0
+
+    for fila in cal:
+        art_price = fila[2]
+        art_itbis = fila[3]
+        art_mount = fila[4]
+
+        subtotal = art_mount * art_price
+        
+        if art_itbis == art_itbis:
+            itbis = art_itbis
+        else:
+            itbis += art_itbis
+
+        subtotal_itbis = itbis * subtotal / 100
+
+        total_price += subtotal
+        total_itbis += subtotal_itbis
+
+    # Calculate total as the sum of subtotal and ITBIS
+    total_total = total_price + total_itbis
+
+    # Redondear los valores a dos decimales
+    total_price = round(total_price, 2)
+    total_itbis = round(total_itbis, 2)
+    total_total = round(total_total, 2)
+
+    resultados.append({'subtotal': total_price, 'itbis': total_itbis, 'total': total_total})
+
+    return resultados
+
+@app.route('/obtener_articles_emp')
+def obtener_articles_emp():
+    cursor = mysql.connection.cursor()
+    cursor.execute('SELECT * FROM articles')
+    article = cursor.fetchall()
+    cursor.close()
+    return article
+
+@app.route('/incluir_art_emp/<id>')
+def incluir_emp(id):
+    cur = mysql.connection.cursor()
+
+    cur.execute('SELECT * FROM articles WHERE art_nombre = (SELECT product_name FROM products WHERE product_id = %s)', (id,))
+    existing_article = cur.fetchone()
+
+    if existing_article:
+        flash('El artículo ya fue añadido.')
+    else:
+        cur.execute('SELECT * FROM products WHERE product_id = %s', (id,))
+        data = cur.fetchall()
+
+        if data:
+            art_id = data[0][0]
+            art_name  = data[0][1]
+            art_price = data[0][2]
+            art_itbis = data[0][3]
+            art_mount = "1"
+            catalogue = data[0][6]
+
+            cur.execute('INSERT INTO articles (id, art_nombre, art_precio, art_itbis, art_cantidad, catalogue) VALUES (%s, %s, %s, %s, %s, %s)', (art_id, art_name, art_price, art_itbis, art_mount, catalogue))
+            mysql.connection.commit()
+
+            cur.execute('UPDATE products SET product_amount = product_amount - 1 WHERE product_id = %s', (id,))
+            mysql.connection.commit()
+
+        cur.close()
+        return redirect(url_for('article_emp'))
+    
+    return redirect(url_for('article_emp'))
+
+@app.route('/pay_emp', methods=["GET","POST"])
+def pay_emp():
+
+    IA()
+
+    # Obtener los datos del formulario
+    numero_tarjeta = request.form['numero_tarjeta']
+    nombre_titular = request.form['nombre_titular']
+    fecha_vencimiento = request.form['fecha_vencimiento']
+    cvv = request.form['cvv']
+    cliente = request.form['cliente']
+    cajero = request.form['cajero']
+    total = request.form['total']
+
+    # Obtener los datos del cliente
+    cursor = mysql.connection.cursor()
+    query = "SELECT * FROM clients WHERE client_id=%s"
+    data = (cliente,)
+    cursor.execute(query, data)
+    result = cursor.fetchone()
+
+    rnc = result[6]
+    ubicacion = result[2]
+    contacto = result[4]
+    customer = result[1]
+
+    # Total
+    partes = total.split()
+    numero = partes[1]
+    total_sin_dolar = numero.strip('$')
+    total_general = str(total_sin_dolar)
+
+    # Verificar si el número de tarjeta es válido o no
+    tarjeta = CreditCard(numero_tarjeta)
+
+    new_id = CIB()
+
+    if tarjeta:
+        fecha_hora = datetime.now()
+        fecha_hora_formateada = fecha_hora.strftime("%Y-%m-%d %H:%M:%S")
+
+        number_bill = GNF()
+
+        cur = mysql.connection.cursor()
+        cur.execute("""INSERT INTO bills (id, date, number_bill, customer, discount, way_to_pay, `change`, cashier, rnc_client_bill, ubicacion, contacto, total_general, estado) 
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
+                        (new_id, fecha_hora_formateada, number_bill, customer, "0", "Tarjeta", "0", cajero, rnc, ubicacion, contacto, total_general, 1))
+        mysql.connection.commit()
+        APB(new_id)
+
+        cur.execute("DELETE FROM articles")
+        mysql.connection.commit()
+        cur.close()
+
+        flash("La compra se realizó con éxito")
+        return redirect(url_for('article_emp'))
+    else:
+        flash("Hubo un problema con la tarjeta")
+        return redirect(url_for('article_emp'))
+
+@app.route("/payment_emp", methods=["GET", "POST"])
+def payment_emp():
+    
+    IAE()
+
+    # Obtener los datos del formulario
+    cliente = request.form['cliente']
+    cajero = request.form['cajero']
+    monto = request.form['monto']
+    total = request.form['total']
+
+    # Obtener los datos del cliente
+    cursor = mysql.connection.cursor()
+    query = "SELECT * FROM clients WHERE client_id=%s"
+    data = (cliente,)
+    cursor.execute(query, data)
+    result = cursor.fetchone()
+
+    rnc = result[6]
+    ubicacion = result[2]
+    contacto = result[4]
+    customer = result[1]
+
+    # Total
+    partes = total.split()
+    numero = partes[1]
+    total_sin_dolar = numero.strip('$')
+    total_general = str(total_sin_dolar)
+
+    total_float = float(total_general)
+    monto_float = float(monto)
+
+    cambio = monto_float - total_float
+
+    new_id = CIBE()
+
+    fecha_hora = datetime.now()
+    fecha_hora_formateada = fecha_hora.strftime("%Y-%m-%d %H:%M:%S")
+
+    number_bill = GNFE()
+
+    cur = mysql.connection.cursor()
+    cur.execute("""INSERT INTO bills (id, date, number_bill, customer, discount, way_to_pay, `change`, cashier, rnc_client_bill, ubicacion, contacto, total_general, estado) 
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
+                    (new_id, fecha_hora_formateada, number_bill, customer, "0", "Efectivo", cambio, cajero, rnc, ubicacion, contacto, total_general, 1))
+    mysql.connection.commit()
+    APBE(new_id)
+
+    cur.execute("DELETE FROM articles")
+    mysql.connection.commit()
+    cur.close()
+
+    flash("La compra se realizó con éxito")
+    return redirect(url_for('article_emp'))
+
+@app.route('/agregar_cantidad_art_emp/<int:id>')
+def agregar_cantidad_emp(id):
+    try:
+        cur = mysql.connection.cursor()
+
+        session['id_product'] = id
+
+        # Obtener la cantidad actual del artículo
+        cur.execute('SELECT art_cantidad FROM articles WHERE id = %s', (id,))
+        current_quantity = cur.fetchone()[0]
+
+        # Obtener la cantidad límite del producto asociado al artículo
+        cur.execute('SELECT amount FROM products WHERE product_id = %s', (id,))
+        limit_quantity = cur.fetchone()[0]
+
+        print("Cantidad actual del artículo:", current_quantity)
+        print("Cantidad límite del producto:", limit_quantity)
+
+        # Verificar si la cantidad actual supera la cantidad límite
+        if current_quantity >= limit_quantity:
+            flash('No se puede agregar más cantidad. Límite alcanzado.')
+        else:
+            # Incrementar la cantidad del artículo
+            cur.execute('UPDATE articles SET art_cantidad = art_cantidad + 1 WHERE id = %s', (id,))
+            mysql.connection.commit()
+
+            cur.execute('UPDATE products SET product_amount = product_amount - 1 WHERE product_id = %s', (id,))
+            mysql.connection.commit()
+            flash('Cantidad agregada correctamente.')
+    except Exception as e:
+        flash('Error al agregar cantidad: {}'.format(str(e)))
+    finally:
+        cur.close()
+
+    return redirect(url_for('article_emp'))
+
+@app.route('/quitar_cantidad_art_emp/<id>')
+def quitar_cantidad_emp(id):
+    cur = mysql.connection.cursor()
+    
+    # Obtener la cantidad actual del producto en la tabla articles
+    cur.execute('SELECT art_cantidad FROM articles WHERE id = %s', (id,))
+    current_quantity = cur.fetchone()[0]
+
+    # Verificar si la cantidad es mayor que cero antes de restar
+    if current_quantity > 1:
+        cur.execute('UPDATE products SET product_amount = product_amount + 1 WHERE product_id = %s', (id,))
+        mysql.connection.commit()
+
+        # Decrementar la cantidad solo si es mayor que cero
+        cur.execute('UPDATE articles SET art_cantidad = art_cantidad - 1 WHERE id = %s', (id,))
+        mysql.connection.commit()
+    else:
+        flash('La cantidad no puede ser menor que cero.')
+
+    cur.close()
+    return redirect(url_for('article_emp'))
+
+@app.route('/remove_article_emp/<string:id>')
+def remove_article_emp(id):
+    cur = mysql.connection.cursor()
+    cur.execute('DELETE FROM articles WHERE id = {0}'.format(id))
+    mysql.connection.commit()
+
+    cur.execute('UPDATE products SET product_amount = product_amount + 1 WHERE product_id = %s', (id,))
+    mysql.connection.commit()
+    flash('Contact Removed Successfully')
+    return redirect(url_for('article_emp'))
+
+@app.route('/cierre_emp', methods = ['POST','GET'])
+def cierre_emp():
+
+    id_C = CIBC()
+    fullname = session['fullname']
+
+    cur = mysql.connection.cursor()
+    cur.execute("SELECT * FROM bills WHERE estado = %s AND cashier = %s",(1,fullname))
+    bills = cur.fetchall()
+
+    observaciones = request.form['observacion']
+
+    fechahora = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    totalingresos = 0
+    totalegresos = 0
+    totaltarjeta = 0
+    totalefectivo = 0
+    totaldevoluciones = 0
+    arqueocaja = 0
+
+    cur.execute("SELECT * FROM closing_box ORDER BY fechahora DESC LIMIT 1")
+    last_insertion = cur.fetchone()
+
+    if last_insertion:
+        saldo = last_insertion[2]
+        if saldo is not None and saldo > 0:
+            saldoinicial = saldo
+        else:
+            saldoinicial = 10000
+    else:
+        saldoinicial = 10000
+
+    for bill in bills:
+        total_bill = bill[11]
+        egresos_bill = bill[6]
+
+        totalegresos += egresos_bill
+        totalingresos += total_bill
+
+        methodo = bill[5]
+
+        if methodo == "Tarjeta":
+            totaltarjeta += total_bill
+        elif methodo == "Efectivo":
+            totalefectivo += total_bill
+        else:
+            flash("Hubo un error")
+
+    saldo_final = saldoinicial + totalingresos - totalegresos
+    
+    arqueocaja = saldo_final - saldoinicial
+            
+    
+    cur.execute("INSERT INTO closing_box (id_closing, fechahora, saldoinicial, totalingresos, totalegresos, totalventasefectivo, totalventastarjeta, totaldevoluciones, arqueocaja, observaciones) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
+                (id_C, fechahora, saldoinicial, totalingresos, totalegresos, totalefectivo, totaltarjeta, totaldevoluciones, arqueocaja, observaciones))
+    mysql.connection.commit()
+    cur.close
+
+    cur.execute("UPDATE bills SET estado = %s",('2'))
+    mysql.connection.commit()
+    cur.close()
+
+    return redirect(url_for('bill_emp'))
+
+#? Empleados Funcion
 
 @app.route('/empleados')
 def empleados():

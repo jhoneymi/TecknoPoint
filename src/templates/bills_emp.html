@@ -302,18 +302,6 @@
             background-color: rgba(0,0,0,0.4);
         }
 
-        #loginModal-edit {
-            display: none;
-            position: fixed;
-            z-index: 1;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            overflow: auto;
-            background-color: rgba(0,0,0,0.4);
-        }
-
         #Observacion-from {
             display: none;
             position: fixed;
@@ -582,24 +570,6 @@
             text-align: center;
         }
 
-        .div {
-            background-color: #f0f0f0; /* Color de fondo */
-            padding: 20px; /* Espaciado interno */
-            border-radius: 10px; /* Borde redondeado */
-            border: 1px solid #ccc; /* Borde con color */
-            margin: 20px auto; /* Margen superior e inferior de 20px, centrado horizontalmente */
-            width: 80%; /* Ancho del 80% del contenedor padre */
-            max-width: 600px; /* Ancho máximo */
-            text-align: center; /* Centrar el contenido del div */
-        }
-
-        .div p {
-            margin: 0; /* Eliminar el margen del párrafo */
-            font-size: 18px; /* Tamaño de fuente */
-            color: rgba(51, 51, 51, 0.7); /* Color del texto con opacidad */
-        }
-
-
     </style>
 </head>
 <body onload="preloader()">
@@ -614,15 +584,10 @@
     </header>
 
     <div class="menu">
-        <a href="/inicio"><div class="line"><label class="lnr lnr-home"><font>Home</font></label></div></a>
-        <a href="/inventario"><div class="line"><label class="lnr lnr-briefcase"><font>Inventory</font></label></div></a>
-        <a href="/empleados"><div class="line"><label class="lnr lnr-users"><font>Employees</font></label></div></a>
-        <a href="/bills"><div class="line"><label class="lnr lnr-file-empty"><font>Bills</font></label></div></a>
-        <a href="/customers"><div class="line"><label class="lnr lnr-user"><font>Clients</font></label></div></a>
-        <a href="/proveedor"><div class="line"><label class="lnr lnr-store"><font>Suppliers</font></label></div></a>
-        <a href="/article"><div class="line"><label class="lnr lnr-cart"><font>Articles</font></label></div></a>
+        <a href="/inicio_emp"><div class="line"><label class="lnr lnr-home"><font>Home</font></label></div></a>
+        <a href="/bills_emp"><div class="line"><label class="lnr lnr-file-empty"><font>Bills</font></label></div></a>
+        <a href="/article_emp"><div class="line"><label class="lnr lnr-cart"><font>Articles</font></label></div></a>
         <a href=""><div class="line"><label class="lnr lnr-chart-bars"><font>Price</font></label></div></a>
-        <a href="/history"><div class="line"><label class="lnr lnr-book"><font>Historico</font></label></div></a>
     </div>
 
     <main>
@@ -632,7 +597,7 @@
                     {% for fila in bills %}
                     
                         <div class="mi-div">
-                            <a class="mi-a" href="/factura_detalle/{{ fila.0 }}">
+                            <a class="mi-a" href="/factura_detalle_emp/{{ fila.0 }}">
                                 <h5>Factura N. {{ fila.2 }}</h5>
                                 <ul>
                                     <li> <strong>date:</strong> {{ fila.1 }}</li>
@@ -660,9 +625,9 @@
                 <div class="modal-content">
                     <span class="close">&times;</span>
                     <h2>Cierre de Caja</h2>
-                    <form action="/cierre" method="post">
+                    <form action="/cierre_emp" method="post">
                         <label for="">Observaciones: </label>
-                        <textarea name="observacion" rows="4" cols="50"></textarea>  
+                        <textarea name="observacion" rows="4" cols="50"></textarea>    
                         <button type="submit">Enviar</button>
                     </form> 
                 </div>
