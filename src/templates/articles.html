@@ -123,7 +123,7 @@
         /* Menu */
 
         .menu {
-            top: 60px;
+            top: 50px;
             width: 60px;
             height: 100vh;
             background: rgb(58, 58, 58);
@@ -139,7 +139,7 @@
         }
 
         .line {
-            margin-top: 10px;
+            margin-top: 9px;
             padding: 10px;
             transition: all 300ms;
         }
@@ -250,7 +250,32 @@
             background-color: rgba(0,0,0,0.4);
         }
 
+        #loginModal-enviar {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+
         .modal-content {
+            background-color: #fefefe;
+            margin: 10% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 100%;
+            max-width: 700px;
+            border-radius: 8px;
+            scrollbar-width:  thin; /* Firefox */
+            -ms-overflow-style: -ms-autohiding-scrollbar;           /* IE 10+ */
+            box-shadow: 0 4px 8px 0 rgba(0,0,0,.2),0 6px 20px 0 rgba(0,0,0,.19) !important;
+        }
+
+        .modal-content-enviar {
             background-color: #fefefe;
             margin: 10% auto;
             padding: 20px;
@@ -292,6 +317,14 @@
             margin-top: -10px;
         }
 
+        .close-enviar {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            margin-top: -10px;
+        }
+
         .close-efectivo {
             color: #aaa;
             float: right;
@@ -309,6 +342,13 @@
 
         .close-compra:hover,
         .close-compra:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .close-enviar:hover,
+        .close-enviar:focus {
             color: black;
             text-decoration: none;
             cursor: pointer;
@@ -517,6 +557,36 @@
             color: rgba(51, 51, 51, 0.7); /* Color del texto con opacidad */
         }
 
+        .email {
+            padding: 8px 16px;
+            border: none;
+            background-color: #fd0000;
+            color: white;
+            font-size: 14px;
+            cursor: pointer;
+            border-radius: 4px;
+            margin: 4px;
+        }
+
+        .email:hover {
+            background-color: #cf0000;
+        }
+
+        .whatsapp {
+            padding: 8px 16px;
+            border: none;
+            background-color: #67ff02;
+            color: white;
+            font-size: 14px;
+            cursor: pointer;
+            border-radius: 4px;
+            margin: 4px;
+        }
+
+        .whatsapp:hover {
+            background-color: #09b200;
+        }
+
     </style>
 </head>
 <body>
@@ -535,6 +605,7 @@
         <a href="/article"><div class="line"><label class="lnr lnr-cart"><font>Articles</font></label></div></a>
         <a href=""><div class="line"><label class="lnr lnr-chart-bars"><font>Price</font></label></div></a>
         <a href="/history"><div class="line"><label class="lnr lnr-book"><font>Historico</font></label></div></a>
+        <a href=""><div class="line"><label class="lnr lnr-printer"><font>Cierres</font></label></div></a>
     </div>
 
     <main>
@@ -686,7 +757,7 @@
                 <label for="cajero">Cajero:</label>
                 <input name="cajero" type="text" value="{{ fullname }}" readonly>
     
-                <button type="submit">Pagar</button>
+                <button type="submit" id="enviar" >Pagar</button>
             </form> 
         </div>
     </div>
@@ -721,13 +792,44 @@
                 <label for="">Cajero:</label>
                 <input type="text" value="{{ fullname }}" name="cajero" readonly>
 
-                <button type="submit">Pagar</button>
+                <button type="submit" id="enviar" >Pagar</button>
             </form> 
+        </div>
+    </div>
+
+    <div id="loginModal-enviar" class="modal">
+        <div class="modal-content-enviar">
+            <span class="close-enviar">&times;</span>
+            <h2 class="method">Enviar Factura</h2>
+            <label for="">Email:</label>
+            <a href="/enviar_Email"><button id="email" class="email"><i class="fa-solid fa-envelope"></i></button></a>
+            <label for="">Whatsapp:</label>
+            <a href="#"><button id="whatsapp" class="whatsapp"><i class="fa-brands fa-whatsapp"></i></button></a>
         </div>
     </div>
 
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script>
+
+        var modal_enviar = document.getElementById('loginModal-enviar');
+        var btn_enviar = document.getElementById("enviar");
+        var span_enviar = document.getElementsByClassName("close-enviar")[0];
+      
+        btn_enviar.onclick = function() {
+            modal_enviar.style.display = "block";
+            modal_efectivo.style.display = "none";
+            modal_tarjeta.style.display = "none";
+        }
+      
+        span_enviar.onclick = function() {
+            modal_enviar.style.display = "none";
+        }
+      
+        window.onclick = function(event) {
+          if (event.target == modal_enviar) {
+            modal_enviar.style.display = "none";
+          }
+        }
         
         document.getElementById('monto').addEventListener('input', function() {
             var montoText = this.value;
@@ -820,6 +922,20 @@
           }
         }
 
+        $('.lnr-menu').on('click', function() {
+            $('.menu').toggleClass("menu-show");
+            $('main').toggleClass("main-move")
+        });
+
+        window.addEventListener('load', function() {
+            // Obtén el contenedor de la página de carga
+            var loaderContainer = document.querySelector('.loader-container');
+            // Oculta el contenedor de la página de carga
+            loaderContainer.style.display = 'none';
+            // Muestra la página principal
+            var mainContent = document.getElementById('mainContent');
+            mainContent.classList.remove('hidden');
+        });
     </script>
 </body>
 </html>

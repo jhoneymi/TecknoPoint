@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Factura</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .total {
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Factura</h1>
+
+<table>
+    <tr>
+        <th>Producto</th>
+        <th>Cantidad</th>
+        <th>Precio unitario</th>
+        <th>Total</th>
+    </tr>
+    <!-- Aquí puedes generar los productos de manera dinámica -->
+    <tr>
+        <td>Producto 1</td>
+        <td>2</td>
+        <td>$10.00</td>
+        <td>$20.00</td>
+    </tr>
+    <tr>
+        <td>Producto 2</td>
+        <td>1</td>
+        <td>$15.00</td>
+        <td>$15.00</td>
+    </tr>
+    <tr>
+        <td>Producto 3</td>
+        <td>3</td>
+        <td>$8.00</td>
+        <td>$24.00</td>
+    </tr>
+    <!-- Fin de productos -->
+    <tr class="total">
+        <td colspan="3">Total</td>
+        <td>$59.00</td>
+    </tr>
+</table>
+
+</body>
+</html>

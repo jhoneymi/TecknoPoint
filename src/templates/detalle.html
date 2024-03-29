@@ -137,7 +137,7 @@
 </head>
 <body>
     <a class="back" href="/bills"><i class="fa-solid fa-arrow-left"></i></a>
-    <span class="print-icon" onclick="generatePDF()" title="Imprimir"><i class="fa-solid fa-print"></i></span>
+    <a href="/descargar_pdf"><span class="print-icon"><i class="fa-solid fa-print"></i></span></a>
     <div class="container">
         {% for fila in bill %}
         <h1 class="title">FACTURA N.{{ fila.2 }}</h1>
@@ -191,13 +191,5 @@
             </tfoot>
         </table>    
     </div>
-    <script>
-        function generatePDF() {
-            // Aquí puedes llamar a la función Python para generar el PDF
-            // Puedes usar AJAX para llamar a un script Python que genere el PDF o simplemente redirigir a una URL que ejecute el script
-            // Por ejemplo, puedes usar window.location.href para redirigir a una ruta en tu servidor que ejecute el script Python
-            window.location.href = "/generar_pdf";
-        }
-    </script>
 </body>
 </html>

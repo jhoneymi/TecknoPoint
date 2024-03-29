@@ -1,10 +1,11 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
+from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify, make_response
 from flask_socketio import SocketIO, emit, namespace, Namespace
 from flask_mysqldb import MySQL
 from creditcard import CreditCard
 import bcrypt
 import datetime
 import os
+import io
 
 #libreria para la factura en PDF
 import pdfkit
@@ -21,6 +22,15 @@ from email.message import EmailMessage
 
 
 app = Flask(__name__)
+
+# Ruta al ejecutable de wkhtmltopdf
+wkhtmltopdf_path = r'C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe'
+
+# Ruta para crear el pdf que se va a enviar
+pdf_output_folder = r'C:\Users\slime\Desktop\TecnoPoint 2\src\pdfs'
+
+# Configura pdfkit para usar la ruta del ejecutable
+config = pdfkit.configuration(wkhtmltopdf=wkhtmltopdf_path)
 
 # solo se declarar variables pero no mi amor
 mensage = ""
@@ -40,14 +50,84 @@ app.config['UPLOAD_FOLDER'] = 'src/static/uploads'
 
 mysql = MySQL(app)
 
+#~ enviar facturas
+def enviar(id):
+    # Verifica si ya existe un archivo "factura.pdf" y elimínalo si es necesario
+    pdf_output_path = os.path.join(pdf_output_folder, 'factura.pdf')
+    if os.path.exists(pdf_output_path):
+        os.remove(pdf_output_path)
+
+    id_factura = str(id)
+
+    # Renderiza el contenido HTML
+    url = 'http://127.0.0.1:5000/factura_detalle/' + id_factura
+
+    # Genera el PDF desde el HTML
+    pdf = pdfkit.from_string(url, False, configuration=config)
+
+    # Guarda el PDF como archivo en la carpeta especificada
+    with open(pdf_output_path, 'wb') as f:
+        f.write(pdf)
+
+    # Devuelve una respuesta con la ubicación del archivo PDF generado
+    return f'PDF generado y guardado en: {pdf_output_path}'
+
+# @app.route('/enviar_WhatsApp')
+# def enviar_w():
+
+@app.route('/enviar_Email')
+def enviar_e():
+
+    pdf_output_path = os.path.join(pdf_output_folder, 'factura.pdf')
+    pdf_path = pdf_output_path
+
+    # Configuración del correo electrónico
+    correo_remitente = "tecknopoint1@gmail.com"
+    contrasena_remitente = "mrvw gpsb whcr tjjx"
+    correo_destinatario = "slimerbatista27@gmail.com"
+    servidor_smtp = "smtp.gmail.com"
+    puerto_smtp = 587
+
+    # Crear mensaje de correo electrónico
+    email = EmailMessage()
+    email["From"] = correo_remitente
+    email["To"] = correo_destinatario
+    email["Subject"] = "Factura adjunta"
+    email.set_content("Adjunto encontrarás la factura")
+
+    # Adjuntar el archivo PDF
+    with open(pdf_path, "rb") as attachment:
+        contenido_pdf = attachment.read()
+    email.add_attachment(contenido_pdf, maintype="application", subtype="octet-stream", filename=os.path.basename(pdf_path))
+
+    # Enviar correo electrónico
+    with smtplib.SMTP(servidor_smtp, puerto_smtp) as smtp:
+        smtp.starttls()
+        smtp.login(correo_remitente, contrasena_remitente)
+        smtp.send_message(email)
+
+    return redirect(url_for('article'))
+
 #^ Cierre de Caja
+@app.route('/closing')
+def closing():
+    closes = obtener_closing()
+    return render_template('closing.html', close = closes)
+
+def obtener_closing():
+    cur = mysql.connection.cursor()
+    cur.execute('SELECT * FROM closing_box')
+    closings = cur.fetchall()
+
+    return closings
+
 @app.route('/cierre', methods = ['POST','GET'])
 def cierre():
 
     id_C = CIBC()
 
     cur = mysql.connection.cursor()
-    cur.execute("SELECT * FROM bills WHERE estado = %s",(1))
+    cur.execute("SELECT * FROM bills WHERE estado = %s",('1'))
     bills = cur.fetchall()
 
     observaciones = request.form['observacion']
@@ -121,30 +201,36 @@ def CIBC():
 
 
 #~ PDF
-@app.route('/generar_pdf')
-def generate_pdf():
-    # Path al archivo HTML
-    html_file = 'src/templates/detalle.html'
+@app.route('/descargar_pdf')
+def descargar_pdf():
 
-    # Nombre del archivo PDF de salida
-    pdf_file = 'factura.pdf'
+    id_factura = session['id_factura']
 
-    # Configuración de pdfkit
-    options = {
-        'page-size': 'Letter',
-        'margin-top': '0.5in',
-        'margin-right': '0.5in',
-        'margin-bottom': '0.5in',
-        'margin-left': '0.5in',
-        'encoding': "UTF-8",
-        'no-outline': None
-    }
+    # URL del contenido a convertir en PDF
+    url = 'http://127.0.0.1:5000/factura_detalle/' + id_factura
+    
+    # Genera el PDF desde la URL
+    pdf = pdfkit.from_url(url, False, configuration=config)
 
-    # Ruta al ejecutable de wkhtmltopdf
-    wkhtmltopdf_path = 'C:/Program Files/wkhtmltopdf/bin/wkhtmltopdf.exe'
+    id_factura_int = int(id_factura)
+    
+    if id_factura_int >= 10:
+        # Crea una respuesta para descargar el PDF
+        response = make_response(pdf)
+        response.headers['Content-Type'] = 'application/pdf'
+        response.headers['Content-Disposition'] = 'attachment; filename=factura N. 000' + id_factura + '.pdf'
+    elif id_factura_int > 99:
+        # Crea una respuesta para descargar el PDF
+        response = make_response(pdf)
+        response.headers['Content-Type'] = 'application/pdf'
+        response.headers['Content-Disposition'] = 'attachment; filename=factura N. 00' + id_factura + '.pdf'
+    else:
+        # Crea una respuesta para descargar el PDF
+        response = make_response(pdf)
+        response.headers['Content-Type'] = 'application/pdf'
+        response.headers['Content-Disposition'] = 'attachment; filename=factura N. 0000' + id_factura + '.pdf'
 
-    # Convertir HTML a PDF
-    pdfkit.from_file(html_file, pdf_file, options=options, configuration=pdfkit.configuration(wkhtmltopdf=wkhtmltopdf_path))
+    return response
 
 
 #? Pago con Tarjeta
@@ -197,6 +283,8 @@ def pay():
                         (new_id, fecha_hora_formateada, number_bill, customer, "0", "Tarjeta", "0", cajero, rnc, ubicacion, contacto, total_general, 1))
         mysql.connection.commit()
         APB(new_id)
+
+        enviar(new_id)
 
         cur.execute("DELETE FROM articles")
         mysql.connection.commit()
@@ -336,6 +424,8 @@ def payment():
                     (new_id, fecha_hora_formateada, number_bill, customer, "0", "Efectivo", cambio, cajero, rnc, ubicacion, contacto, total_general, 1))
     mysql.connection.commit()
     APBE(new_id)
+
+    enviar(new_id)
 
     cur.execute("DELETE FROM articles")
     mysql.connection.commit()
@@ -536,6 +626,9 @@ def obtener_bills():
 
 @app.route('/factura_detalle/<id>')
 def factura_detalle(id):
+
+    session['id_factura'] = id
+
     cur = mysql.connection.cursor()
     cur.execute("SELECT * FROM bills WHERE id = %s",(id,))
     bill = cur.fetchall()
@@ -1304,6 +1397,8 @@ def pay_emp():
         mysql.connection.commit()
         APB(new_id)
 
+        enviar(new_id)
+
         cur.execute("DELETE FROM articles")
         mysql.connection.commit()
         cur.close()
@@ -1361,6 +1456,8 @@ def payment_emp():
                     (new_id, fecha_hora_formateada, number_bill, customer, "0", "Efectivo", cambio, cajero, rnc, ubicacion, contacto, total_general, 1))
     mysql.connection.commit()
     APBE(new_id)
+
+    enviar(new_id)
 
     cur.execute("DELETE FROM articles")
     mysql.connection.commit()
