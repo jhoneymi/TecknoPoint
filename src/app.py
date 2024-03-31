@@ -63,11 +63,13 @@ def enviar(id):
     url = 'http://127.0.0.1:5000/factura_detalle/' + id_factura
 
     # Genera el PDF desde el HTML
-    pdf = pdfkit.from_string(url, False, configuration=config)
+    pdf = pdfkit.from_url(url, False, configuration=config)
 
     # Guarda el PDF como archivo en la carpeta especificada
     with open(pdf_output_path, 'wb') as f:
         f.write(pdf)
+
+    enviar_e()
 
     # Devuelve una respuesta con la ubicación del archivo PDF generado
     return f'PDF generado y guardado en: {pdf_output_path}'
@@ -125,6 +127,8 @@ def obtener_closing():
 def cierre():
 
     id_C = CIBC()
+    
+    fullname = session['fullname']
 
     cur = mysql.connection.cursor()
     cur.execute("SELECT * FROM bills WHERE estado = %s",('1'))
@@ -139,6 +143,7 @@ def cierre():
     totalefectivo = 0
     totaldevoluciones = 0
     arqueocaja = 0
+    cajero = fullname
 
     cur.execute("SELECT * FROM closing_box ORDER BY fechahora DESC LIMIT 1")
     last_insertion = cur.fetchone()
@@ -148,9 +153,9 @@ def cierre():
         if saldo is not None and saldo > 0:
             saldoinicial = saldo
         else:
-            saldoinicial = 10000
+            saldoinicial = 1000
     else:
-        saldoinicial = 10000
+        saldoinicial = 1000
 
     for bill in bills:
         total_bill = bill[11]
@@ -173,8 +178,8 @@ def cierre():
     arqueocaja = saldo_final - saldoinicial
             
     
-    cur.execute("INSERT INTO closing_box (id_closing, fechahora, saldoinicial, totalingresos, totalegresos, totalventasefectivo, totalventastarjeta, totaldevoluciones, arqueocaja, observaciones) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
-                (id_C, fechahora, saldoinicial, totalingresos, totalegresos, totalefectivo, totaltarjeta, totaldevoluciones, arqueocaja, observaciones))
+    cur.execute("INSERT INTO closing_box (id_closing, fechahora, saldoinicial, totalingresos, totalegresos, totalventasefectivo, totalventastarjeta, totaldevoluciones, arqueocaja, observaciones, cajero) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
+                (id_C, fechahora, saldoinicial, totalingresos, totalegresos, totalefectivo, totaltarjeta, totaldevoluciones, arqueocaja, observaciones, cajero))
     mysql.connection.commit()
     cur.close
 
@@ -567,33 +572,25 @@ def inicio():
     return render_template('inicio.html', INCT = INCT, CUST = customer)
 
 #*  Admin
-@app.route('/admin')
+@app.route('/admin', methods = ['GET','POST'])
 def  admin():
-    time = schedule()
-    return render_template('admin.html', time = time)
+    users = obtener_Users()
+    time = obtener_tiempo()
+    return render_template('admin.html', time = time, users = users)
 
-@app.route('/schedule')
-def schedule():
+def obtener_Users():
+    cur = mysql.connection.cursor()
+    cur.execute("SELECT * FROM users")
+    users = cur.fetchall()
+
+    return users
+
+def obtener_tiempo():
     cur = mysql.connection.cursor()
     cur.execute("SELECT * FROM time")
-    time = cur.fetchall
+    time = cur.fetchall()
 
     return time
-
-class MyNamespace(Namespace):
-    def on_connect(self):
-        print('Cliente conectado')
-
-    def on_disconnect(self):
-        print('Cliente desconectado')
-
-    def on_get_users(self):
-        cursor = mysql.connection.cursor()
-        cursor.execute("SELECT * FROM users")
-        users = cursor.fetchall()
-        emit('update_users', users)
-
-socketio.on_namespace(MyNamespace('/my_namespace'))
 
 #! History
 @app.route('/history', methods=['GET','POST'])
@@ -998,7 +995,11 @@ def login():
             fecha_hora = datetime.now()
             fecha_hora_formateada = fecha_hora.strftime("%Y-%m-%d %H:%M:%S.%f")
 
-            cur.execute("UPDATE users SET state = TRUE WHERE user_id = %s", (user[0],))
+            # cur.execute("UPDATE users SET state = TRUE WHERE user_id = %s", (session_id,))
+            # mysql.connection.commit()
+
+            cur = mysql.connection.cursor()
+            cur.execute('UPDATE users SET state = %s WHERE user_id = %s',("1", session_id))
             mysql.connection.commit()
 
             socketio.emit('get_users', namespace='/my_namespace')
@@ -1008,7 +1009,6 @@ def login():
             if bcrypt.checkpw(password.encode('utf-8'), stored_password):
 
                 if session['role_id'] == 1:
-
                     cur = mysql.connection.cursor()
                     cur.execute('SELECT * FROM time WHERE id_users = %s',(session_id))
                     duplicate = cur.fetchall()
@@ -1019,10 +1019,11 @@ def login():
                         mysql.connection.commit()
                     else:
                         cur = mysql.connection.cursor()
-                        cur.execute('INSERT INTO time (id_users, entry_date) VALUES (%s, %s)',(session_id, fecha_hora_formateada))
+                        cur.execute('INSERT INTO time (id, id_users, entry_date) VALUES (%s, %s, %s)',(session_id, session_id, fecha_hora_formateada))
                         mysql.connection.commit()
 
                     return redirect(url_for('admin'))
+                
                 elif session['role_id'] == 2:
                     cur = mysql.connection.cursor()
                     cur.execute('SELECT * FROM time WHERE id_users = %s',(session_id))
@@ -1034,7 +1035,7 @@ def login():
                         mysql.connection.commit()
                     else:
                         cur = mysql.connection.cursor()
-                        cur.execute('INSERT INTO time (id_users, entry_date) VALUES (%s, %s)',(session_id, fecha_hora_formateada))
+                        cur.execute('INSERT INTO time (id, id_users, entry_date) VALUES (%s, %s, %s)',(session_id, session_id, fecha_hora_formateada))
                         mysql.connection.commit()
                     # # Enviar correo electronico cuando se logue e usuario
                     # correo_remitente = "tecknopoint1@gmail.com"
@@ -1069,7 +1070,7 @@ def login():
                         mysql.connection.commit()
                     else:
                         cur = mysql.connection.cursor()
-                        cur.execute('INSERT INTO time (id_users, entry_date) VALUES (%s, %s)',(session_id, fecha_hora_formateada))
+                        cur.execute('INSERT INTO time (id, id_users, entry_date) VALUES (%s, %s, %s)',(session_id, session_id, fecha_hora_formateada))
                         mysql.connection.commit()
 
                     return redirect(url_for('inicio_emp'))
@@ -1124,8 +1125,12 @@ def logout():
     cur.execute("SELECT * FROM users")
     user = cur.fetchone()
 
-    cur.execute("UPDATE users SET state = FALSE WHERE user_id = %s", (user[0],))
+    cur = mysql.connection.cursor()
+    cur.execute('UPDATE users SET state = %s WHERE user_id = %s',("2", session['id']))
     mysql.connection.commit()
+
+    # cur.execute("UPDATE users SET state = FALSE WHERE user_id = %s", (user[0],))
+    # mysql.connection.commit()
 
     socketio.emit('get_users', namespace='/my_namespace')
 
@@ -1554,6 +1559,7 @@ def cierre_emp():
     totalefectivo = 0
     totaldevoluciones = 0
     arqueocaja = 0
+    cajero = fullname
 
     cur.execute("SELECT * FROM closing_box ORDER BY fechahora DESC LIMIT 1")
     last_insertion = cur.fetchone()
@@ -1563,9 +1569,9 @@ def cierre_emp():
         if saldo is not None and saldo > 0:
             saldoinicial = saldo
         else:
-            saldoinicial = 10000
+            saldoinicial = 1000
     else:
-        saldoinicial = 10000
+        saldoinicial = 1000
 
     for bill in bills:
         total_bill = bill[11]
@@ -1588,8 +1594,8 @@ def cierre_emp():
     arqueocaja = saldo_final - saldoinicial
             
     
-    cur.execute("INSERT INTO closing_box (id_closing, fechahora, saldoinicial, totalingresos, totalegresos, totalventasefectivo, totalventastarjeta, totaldevoluciones, arqueocaja, observaciones) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
-                (id_C, fechahora, saldoinicial, totalingresos, totalegresos, totalefectivo, totaltarjeta, totaldevoluciones, arqueocaja, observaciones))
+    cur.execute("INSERT INTO closing_box (id_closing, fechahora, saldoinicial, totalingresos, totalegresos, totalventasefectivo, totalventastarjeta, totaldevoluciones, arqueocaja, observaciones, cajero) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
+                (id_C, fechahora, saldoinicial, totalingresos, totalegresos, totalefectivo, totaltarjeta, totaldevoluciones, arqueocaja, observaciones, cajero))
     mysql.connection.commit()
     cur.close
 

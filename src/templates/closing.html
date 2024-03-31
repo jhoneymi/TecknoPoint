@@ -623,32 +623,47 @@
         <a href="/article"><div class="line"><label class="lnr lnr-cart"><font>Articles</font></label></div></a>
         <a href=""><div class="line"><label class="lnr lnr-chart-bars"><font>Price</font></label></div></a>
         <a href="/history"><div class="line"><label class="lnr lnr-book"><font>Historico</font></label></div></a>
-        <a href=""><div class="line"><label class="lnr lnr-printer"><font>Cierres</font></label></div></a>
+        <a href="/closing"><div class="line"><label class="lnr lnr-printer"><font>Cierres</font></label></div></a>
     </div>
 
     <main>
         <article>
             <table>
+                    <tr>
+                        <th>cajero</th>
+                        <th>fecha de cierre de caja</th>
+                        <th>saldo inicial</th>
+                        <th>total ingresos</th>
+                        <th>total egresos</th>
+                        <th>total ventas efectivo</th>
+                        <th>total ventas tarjeta</th>
+                        <th>total devoluciones</th>
+                        <th>arqueo caja</th>
+                        <th>obsercaciones</th>
+                    </tr>
                 {% if close %}
                     {% for fila in close %}
-                    
-                        <div class="mi-div">
-                            <a class="mi-a" href="/factura_detalle/{{ fila.0 }}">
-                                <h5>Factura N. {{ fila.2 }}</h5>
-                                <ul>
-                                    <li> <strong>date:</strong> {{ fila.1 }}</li>
-                                    <li> <strong>customer:</strong> {{ fila.3 }}</li>
-                                    <li> <strong>cashier:</strong> {{ fila.7 }}</li>
-                                    <li><strong>methodo pago:</strong> {{ fila.5 }}</li>
-                                    <li> <strong>total:</strong> {{ fila.11 }} $</li>
-                                </ul>
-                            </a>
-                        </div>
+                        <tr>
+                            <td> {{ fila.10 }} </td>
+                            <td> {{ fila.1 }} </td>
+                            <td> {{ fila.2 }} </td>
+                            <td> {{ fila.3 }} </td>
+                            <td> {{ fila.4 }} </td>
+                            <td> {{ fila.5 }} </td>
+                            <td> {{ fila.6 }} </td>
+                            <td> {{ fila.7 }} </td>
+                            <td> {{ fila.8 }} </td>
+                            <td> {{ fila.9 }} </td>
+                        </tr>
                     {% endfor %}
                 {% else %}
-                    <div class="div">
-                        <p>No sean hecho cierres de caja</p>
-                    </div>
+                    <tr>
+                        <td colspan="10">
+                            <div class="div">
+                                <p>No hay cierres de caja hechos</p>
+                            </div>
+                        </td>
+                    </tr>
                 {% endif %}
             </table>
         </article>

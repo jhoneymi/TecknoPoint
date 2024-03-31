@@ -529,20 +529,30 @@
                     <th>Catalogo</th>
                     <th>Operation</th>
                 </tr>
-                {% for fila in articles %}
-                <tr>
-                    <td>{{ fila.1 }}</td>
-                    <td>{{ fila.2 }}$</td>
-                    <td>{{ fila.3 }}%</td>
-                    <td>
-                        <a href="/agregar_cantidad_art_emp/{{ fila.0 }}"><button id="Agregar">+</button></a>
-                        {{ fila.4 }}
-                        <a href="/quitar_cantidad_art_emp/{{ fila.0 }}"><button id="remove" class="Quitar">-</button></a>
-                    </td>
-                    <td>{{ fila.5 }}</td>
-                    <td><a href="/remove_article_emp/{{ fila.0 }}"><button class="Quitar"><i class="fa-solid fa-trash-can"></i></i></button></a></td>
-                </tr>
-                {% endfor %}
+                {% if articles %}
+                    {% for fila in articles %}
+                        <tr>
+                            <td>{{ fila.1 }}</td>
+                            <td>{{ fila.2 }}$</td>
+                            <td>{{ fila.3 }}%</td>
+                            <td>
+                                <a href="/agregar_cantidad_art_emp/{{ fila.0 }}"><button id="Agregar">+</button></a>
+                                {{ fila.4 }}
+                                <a href="/quitar_cantidad_art_emp/{{ fila.0 }}"><button id="remove" class="Quitar">-</button></a>
+                            </td>
+                            <td>{{ fila.5 }}</td>
+                            <td><a href="/remove_article_emp/{{ fila.0 }}"><button class="Quitar"><i class="fa-solid fa-trash-can"></i></i></button></a></td>
+                        </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="6">
+                            <div class="div">
+                                <p>No hay articulos para comprar </p>
+                            </div>
+                        </td>
+                    </tr>
+                {% endif %}
             </table>
             <table id = "resultados">
                 <tr>
@@ -582,19 +592,29 @@
                     <th>Catalogo</th>
                     <th>Operaciones</th>
                 </tr>
-                {% for fila in datos %}
-                <tr>
-                    <td><img src="{{ url_for('static', filename='uploads/' + fila[7]) }}" alt="{{ fila.6 }}"></td>
-                    <td>{{ fila.1 }}</td>
-                    <td>{{ fila.2 }}$</td>
-                    <td>{{ fila.3 }}%</td>
-                    <td>{{ fila.4 }}</td>
-                    <td>{{ fila.6 }}</td>
-                    <td>
-                        <a href="/incluir_art_emp/{{ fila.0 }}"><button id="edit">Incluir</button></a>
-                    </td>
-                </tr>
-                {% endfor %}
+                {% if datos %}
+                    {% for fila in datos %}
+                    <tr>
+                        <td><img src="{{ url_for('static', filename='uploads/' + fila[7]) }}" alt="{{ fila.6 }}"></td>
+                        <td>{{ fila.1 }}</td>
+                        <td>{{ fila.2 }}$</td>
+                        <td>{{ fila.3 }}%</td>
+                        <td>{{ fila.4 }}</td>
+                        <td>{{ fila.6 }}</td>
+                        <td>
+                            <a href="/incluir_art_emp/{{ fila.0 }}"><button id="edit">Incluir</button></a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="7">
+                            <div class="div">
+                                <p>No hay productos en Inventario</p>
+                            </div>
+                        </td>
+                    </tr>
+                {% endif %}
             </table>
         </article>
         </div>
