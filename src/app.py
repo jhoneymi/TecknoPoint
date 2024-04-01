@@ -5,6 +5,7 @@ from creditcard import CreditCard
 import bcrypt
 import datetime
 import os
+import threading
 import io
 
 #libreria para la factura en PDF
@@ -22,6 +23,9 @@ from email.message import EmailMessage
 
 
 app = Flask(__name__)
+
+# Definiendo una variable global para controlar si el contador está activo o no
+contador_activo = True
 
 # Ruta al ejecutable de wkhtmltopdf
 wkhtmltopdf_path = r'C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe'
