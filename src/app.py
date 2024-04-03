@@ -193,6 +193,14 @@ def cierre():
 
     return redirect(url_for('bill'))
 
+@app.route('/detalle_c/<id>')
+def detalle_c():
+    cur = mysql.connection.cursor()
+    cur.execute("SELECT * FROM closing_box WHERE id_closing = %s",(id))
+    detalle = cur.fetchall()
+
+    return render_template('detalle_c.html', detalle)
+
 def CIBC():
     con = mysql.connection
     cur = con.cursor()

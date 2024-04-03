@@ -643,6 +643,7 @@
                     </tr>
                 {% if close %}
                     {% for fila in close %}
+                    <a href="{{ fila.0 }}">
                         <tr>
                             <td> {{ fila.10 }} </td>
                             <td> {{ fila.1 }} </td>
@@ -655,6 +656,7 @@
                             <td> {{ fila.8 }} </td>
                             <td> {{ fila.9 }} </td>
                         </tr>
+                    </a>
                     {% endfor %}
                 {% else %}
                     <tr>
