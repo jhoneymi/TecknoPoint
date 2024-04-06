@@ -2,8 +2,9 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Factura</title>
+    <title>Cierre de Caja</title>
     <script src="https://kit.fontawesome.com/5ef1b31399.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -133,6 +134,70 @@
             padding: 2px;
             cursor: pointer;
         }
+
+        .circulo {
+            margin-top: 4px;
+            margin-bottom: 4px;
+            width: 240px;
+            height: auto;
+        }
+
+        .Contenedor_circulo {
+            display: block;
+            background-color: #f1f1f1;
+            border-radius: 9px;
+            width: 50%;
+            margin-left: -4px;
+        }
+
+        .Contenedor_circulo > div {
+            margin-left: 80px;
+        }
+
+        .Contenedor_circulo > h2 {
+            text-align: center;
+        }
+
+        .Contenedor_circulo > p {
+            font-size: 12px;
+            margin-bottom: 15px;
+            margin-left: 4px;
+        }
+
+        .Bara {
+            margin-top: 4px;
+            margin-bottom: 4px;
+            width: 240px;
+            height: auto;
+            margin-top: 70px;
+            margin-bottom: 70px;
+        }
+
+        .Contenedor_bara {
+            display: block;
+            background-color: #f1f1f1;
+            border-radius: 9px;
+            width: 50%;
+            margin-left: 10px;
+        }
+
+        .Contenedor_bara > div {
+            margin-left: 80px;
+        }
+
+        .Contenedor_bara > h2 {
+            text-align: center;
+        }
+
+        .Contenedor_bara > p {
+            font-size: 12px;
+            margin-left: 4px;
+        }
+
+        .Contenedor {
+            display: flex;
+        }
+
     </style>
 </head>
 <body>
@@ -156,9 +221,29 @@
             <p><strong>Cajero:</strong> {{ fila.10 }}</p>
             {% endfor %}
         </div>
-        <table>
-            
-        </table>
+        <div class="info-section Contenedor">
+            <div class="info-section Contenedor_circulo">
+                <h2>Grafico de Ganancias y Gatos</h2>
+                <div class="circulo">
+                    <canvas id="myChart"></canvas>
+                </div>
+                {% for fila in detalle %}
+                    <p>Total Ingresos: {{ fila.3 }}</p>
+                {% endfor %}
+            </div>
+            <div class="info-section Contenedor_bara">
+                <h2>Grafico de Arqueo Caja</h2>
+                <div class="Bara">
+                    <canvas id="myChart_bar"></canvas>
+                </div>
+                {% for fila in detalle %}
+                    <p>Total del Arqueo: {{ fila.8 }}</p>
+                {% endfor %}
+            </div>
+        </div>
     </div>
+
+    <script src="{{ url_for('static', filename='js/circle.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/bara.js') }}"></script>
 </body>
 </html>

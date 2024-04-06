@@ -640,11 +640,12 @@
                         <th>total devoluciones</th>
                         <th>arqueo caja</th>
                         <th>obsercaciones</th>
+                        <th></th>
                     </tr>
                 {% if close %}
                     {% for fila in close %}
-                    <a href="{{ fila.0 }}">
-                        <tr>
+                    <tr>
+                        <a href="{{ fila.0 }}">
                             <td> {{ fila.10 }} </td>
                             <td> {{ fila.1 }} </td>
                             <td> {{ fila.2 }} </td>
@@ -655,8 +656,9 @@
                             <td> {{ fila.7 }} </td>
                             <td> {{ fila.8 }} </td>
                             <td> {{ fila.9 }} </td>
-                        </tr>
-                    </a>
+                            <td><a href="/detalle_c/{{ fila.0 }}"><button class="Buscar">ver</button></a></td>
+                        </a>
+                    </tr>
                     {% endfor %}
                 {% else %}
                     <tr>

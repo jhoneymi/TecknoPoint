@@ -13,6 +13,7 @@ import pdfkit
 
 # Libreria par el tiempo
 from datetime import datetime, timedelta
+import time
 
 import random
 import string
@@ -53,6 +54,38 @@ app.config['MYSQL_DB'] = 'teknopoint_original'
 app.config['UPLOAD_FOLDER'] = 'src/static/uploads'
 
 mysql = MySQL(app)
+
+# Loader
+@app.route('/loader')
+def loader():
+    intermedio
+    return render_template('loader.html')
+
+def intermedio():
+    contador()
+
+def contador():
+
+    contar = 0
+
+    while True:
+
+        contar += 1
+        print(contar)
+
+        if contar >= 6000000:
+            return redirect(url_for('login'))
+
+# Manejador de error para URL no encontrada (404)
+@app.errorhandler(404)
+def page_not_found(error):
+    # Obtenemos la URL de la página anterior
+    previous_page = request.referrer
+    # Si no hay una URL anterior, redirigimos a la página principal
+    if previous_page is None:
+        return redirect(url_for('index'))
+    # De lo contrario, redirigimos a la página anterior
+    return redirect(previous_page)
 
 #~ enviar facturas
 def enviar(id):
@@ -153,7 +186,7 @@ def cierre():
     last_insertion = cur.fetchone()
 
     if last_insertion:
-        saldo = last_insertion[2]
+        saldo = last_insertion[8]
         if saldo is not None and saldo > 0:
             saldoinicial = saldo
         else:
@@ -194,12 +227,49 @@ def cierre():
     return redirect(url_for('bill'))
 
 @app.route('/detalle_c/<id>')
-def detalle_c():
+def detalle_c(id):
+
+    session['id_c'] = id
+
     cur = mysql.connection.cursor()
     cur.execute("SELECT * FROM closing_box WHERE id_closing = %s",(id))
     detalle = cur.fetchall()
 
-    return render_template('detalle_c.html', detalle)
+    balance_json()
+
+    return render_template('detalle_c.html', detalle = detalle)
+
+@app.route('/CierreBalance_json')
+def balance_json():
+
+    id_Cierre = session['id_c']
+
+    cur = mysql.connection.cursor()
+    cur.execute("SELECT * FROM closing_box WHERE id_closing = %s",(id_Cierre))
+    detalle = cur.fetchall()
+
+    # Obtener los datos del Cierre
+    for fila in detalle:
+        saldo_inicial = fila[2]
+        total_ingresos = fila[3]
+        total_egresos = fila[4]
+        pagos_tarjeta = fila[6]
+        pagos_efectivo = fila[5]
+        arqueo_caja = fila[8]
+
+    # Crear un diccionario con los datos para el gráfico
+    data = {
+        'saldo_incial': saldo_inicial,
+        'total_ingresos': total_ingresos,
+        'total_egresos': total_egresos,
+        'total_tarjeta': pagos_tarjeta,
+        'total_efectivo': pagos_efectivo,
+        'arqueo_caja': arqueo_caja 
+
+    }
+
+    # Devolver los datos como JSON
+    return jsonify(data)
 
 def CIBC():
     con = mysql.connection
@@ -608,7 +678,13 @@ def obtener_tiempo():
 @app.route('/history', methods=['GET','POST'])
 def history():
     historys = obtener_historys()
-    return render_template('history.html', history = historys)
+    total = 0
+
+    for fila in historys:
+
+        total += fila[11]
+
+    return render_template('history.html', history = historys, total = total)
 
 def obtener_historys():
     cur = mysql.connection.cursor()
@@ -617,6 +693,58 @@ def obtener_historys():
     cur.close()
 
     return data
+
+@app.route('/filtrar', methods=['POST', 'GET'])
+def filtro():
+    if request.method == 'POST':
+        fecha_inicio = request.form.get('fecha_inicio')
+        fecha_fin = request.form.get('fecha_fin')
+
+    if fecha_inicio is None and fecha_fin is None:
+        selecion = request.form.get('selecion')
+
+        if selecion == "diario":
+            # Obtener el rango de fechas para el día actual
+            fecha_inicio = datetime.now().strftime("%d-%m-%Y")
+            fecha_fin = (datetime.now() + timedelta(days=1)).strftime("%d-%m-%Y")
+        elif selecion == "semanal":
+            # Obtener el rango de fechas para la semana actual
+            fecha_actual = datetime.now()
+            fecha_sem = fecha_actual - timedelta(days=fecha_actual.weekday())
+            fecha_inicio = fecha_sem.strftime("%d-%m-%Y")
+            fecha_fin = (fecha_sem + timedelta(days=6)).strftime("%d-%m-%Y")
+        elif selecion == "trimestral":
+            # Obtener el rango de fechas para el trimestre actual
+            fecha_inicio = datetime.now()
+            trimestre_actual = (fecha_inicio.month - 1) // 3 + 1
+            fecha_trimestre = datetime(fecha_inicio.year, 3 * trimestre_actual - 2, 1)
+            fecha_inicio = fecha_trimestre.strftime("%d-%m-%Y")
+            fecha_fin = fecha_inicio  # Fin del trimestre es el mismo que el inicio
+        elif selecion == "anual":
+            # Obtener el rango de fechas para el año actual
+            fecha_inicio = datetime.now().strftime("01-01-%Y")
+            fecha_fin = datetime.now().strftime("31-12-%Y")
+        elif selecion == "mensual":
+            # Obtener el rango de fechas para el mes actual
+            fecha_inicio = datetime.now().replace(day=1).strftime("%d-%m-%Y")
+            fecha_fin = (datetime.now().replace(day=1) + timedelta(days=31)).strftime("%d-%m-%Y")         
+    else:
+        None
+
+        filtro = obtener_filtro_history(fecha_inicio, fecha_fin)
+        
+        total = sum(fila[11] for fila in filtro)
+
+        return render_template('filtrar.html', history=filtro, total=total)
+
+def obtener_filtro_history(fecha_inicio, fecha_fin):
+    cur = mysql.connection.cursor()
+    cur.execute("SELECT * FROM bills WHERE estado = %s AND date BETWEEN %s AND %s", ("2", fecha_inicio, fecha_fin))
+    data = cur.fetchall()
+    cur.close()
+
+    return data
+
 
 #* Bills
 @app.route('/bills', methods=['GET','POST'])
@@ -830,6 +958,40 @@ def incluir(id):
     return redirect(url_for('article'))
 
 
+def enviar_alerta(producto,amount):
+
+    nombre_p = producto
+    stock = amount
+
+    # Enviar correo electronico cuando se logue e usuario
+    correo_remitente = "tecknopoint1@gmail.com"
+    contrasena_remitente = "mrvw gpsb whcr tjjx"
+    correo_destinatario = "slimerbatista27@gmail.com"
+    servidor_smtp = "smtp.gmail.com"
+    puerto_smtp = 587
+
+    correo_destinatario = email
+    asunto="¡Alerta de Stock Bajo! 🚨"
+    mensaje=f"""
+                Solo quería advertirte que nuestro stock de {nombre_p} está llegando a niveles críticos. Actualmente solo quedan {stock} unidades disponibles en el punto de venta.
+
+                ¡Es hora de reabastecer antes de que sea demasiado tarde!
+
+                Gracias,
+                TecknoPoint"""
+
+    email = EmailMessage()
+    email["From"] = correo_remitente
+    email["To"] = correo_destinatario
+    email["Subject"] = asunto
+    email.set_content(mensaje)
+
+    with smtplib.SMTP(servidor_smtp, puerto_smtp) as smtp:
+        smtp.starttls()
+        smtp.login(correo_remitente, contrasena_remitente)
+
+        smtp.send_message(email)
+
 @app.route('/agregar_cantidad_art/<int:id>')
 def agregar_cantidad(id):
     try:
@@ -844,7 +1006,7 @@ def agregar_cantidad(id):
         # Obtener la cantidad límite del producto asociado al artículo
         cur.execute('SELECT amount FROM products WHERE product_id = %s', (id,))
         limit_quantity = cur.fetchone()[0]
-
+ 
         print("Cantidad actual del artículo:", current_quantity)
         print("Cantidad límite del producto:", limit_quantity)
 
@@ -978,7 +1140,7 @@ def update(id):
         mysql.connection.commit()
         flash('Contact Updated Successfully')
         return redirect(url_for('inventario'))
-
+    
 
 #TODO  Login
 @app.route('/login', methods=['GET','POST'])
@@ -1154,7 +1316,9 @@ def logout():
     mysql.connection.commit()
 
     session.clear()
-    flash('Sesión cerrada exitosamente', 'success')
+    mensage = 'Sesión cerrada exitosamente', 'success'
+
+    flash(message=mensage)
     return redirect(url_for('login'))
 
 #?  Proveedores

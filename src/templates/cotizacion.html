@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>History</title>
+    <title>Cotizacion</title>
     <link rel="icon" href="../static/img/image.png">
     <link rel="stylesheet" href="https://cdn.linearicons.com/free/1.0.0/icon-font.min.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
@@ -314,6 +314,18 @@
             background-color: rgba(0,0,0,0.4);
         }
 
+        #Observacion-from {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+
         .modal-content {
             background-color: #fefefe;
             margin: 10% auto;
@@ -380,8 +392,9 @@
         }
 
         input[type="text"],
-        input[type="date"],
-        button[type="submit"] {
+        input[type="number"],
+        button[type="submit"],
+        textarea {
             margin-bottom: 15px;
             padding: 10px;
             border: 1px solid #ccc;
@@ -400,8 +413,9 @@
             background-color: #45a049;
         }
 
-        input[type="date"]:focus,
-        input[type="number"]:focus {
+        input[type="text"]:focus,
+        input[type="number"]:focus,
+        textarea:focus {
             outline: none;
             border-color: #4CAF50;
         }
@@ -568,39 +582,25 @@
             text-align: center;
         }
 
-    .div {
-        background-color: #f0f0f0; /* Color de fondo */
-        padding: 20px; /* Espaciado interno */
-        border-radius: 10px; /* Borde redondeado */
-        border: 1px solid #ccc; /* Borde con color */
-        margin: 20px auto; /* Margen superior e inferior de 20px, centrado horizontalmente */
-        width: 80%; /* Ancho del 80% del contenedor padre */
-        max-width: 600px; /* Ancho máximo */
-        text-align: center; /* Centrar el contenido del div */
-    }
+        .div {
+            background-color: #f0f0f0; /* Color de fondo */
+            padding: 20px; /* Espaciado interno */
+            border-radius: 10px; /* Borde redondeado */
+            border: 1px solid #ccc; /* Borde con color */
+            margin: 20px auto; /* Margen superior e inferior de 20px, centrado horizontalmente */
+            width: 80%; /* Ancho del 80% del contenedor padre */
+            max-width: 600px; /* Ancho máximo */
+            text-align: center; /* Centrar el contenido del div */
+        }
 
-    .div p {
-        margin: 0; /* Eliminar el margen del párrafo */
-        font-size: 18px; /* Tamaño de fuente */
-        color: rgba(51, 51, 51, 0.7); /* Color del texto con opacidad */
-    }
+        .div p {
+            margin: 0; /* Eliminar el margen del párrafo */
+            font-size: 18px; /* Tamaño de fuente */
+            color: rgba(51, 51, 51, 0.7); /* Color del texto con opacidad */
+        }
 
-    .filtrar {
-        background-color: transparent;
-        width: 10px;
-        height: 10px;
-        margin-top: -50px;
-        margin-left: 84rem;
-        margin-bottom: 40px;
-        font-size: 20px;
-        color: #000000;
-    }
 
-    .filtrar:hover {
-        background-color: transparent;
-    }
-
-</style>
+    </style>
 </head>
 <body onload="preloader()">
 
@@ -627,11 +627,10 @@
     </div>
 
     <main>
-        <button class="filtrar" id="filtrar"><i class="fa-solid fa-calendar-days"></i></button>
         <article>
             <table>
-                {% if history %}
-                    {% for fila in history %}
+                {% if bills %}
+                    {% for fila in bills %}
                     
                         <div class="mi-div">
                             <a class="mi-a" href="/factura_detalle/{{ fila.0 }}">
@@ -639,7 +638,7 @@
                                 <ul>
                                     <li> <strong>date:</strong> {{ fila.1 }}</li>
                                     <li> <strong>customer:</strong> {{ fila.3 }}</li>
-                                    <li> <strong>cashier:</strong> {{ fila.9 }}</li>
+                                    <li> <strong>cashier:</strong> {{ fila.7 }}</li>
                                     <li><strong>methodo pago:</strong> {{ fila.5 }}</li>
                                     <li> <strong>total:</strong> {{ fila.11 }} $</li>
                                 </ul>
@@ -647,38 +646,29 @@
                         </div>
                     {% endfor %}
                 {% else %}
-                        <div class="div">
-                            <p>No se han hecho cierres de caja</p>
-                        </div>
+                    <div class="div">
+                        <p>No hay facturas creadas</p>
+                    </div>
                 {% endif %}
             </table>
-            <h2>Total = {{ total }}</h2>
-            <div id="loginModal" class="modal">
+            <table>
+                <tr>
+                    <button id="cierre" class="cierre">Cierre de Caja</button>
+                </tr>
+            </table>
+
+            <div id="Observacion-from" class="modal">
                 <div class="modal-content">
                     <span class="close">&times;</span>
-                    <h2>Filtrar Facturas</h2>
-                    <form action="/filtrar" method="post">
-                        <label for="fecha_inicio">Fecha de inicio:</label>
-                        <input type="date" id="fecha_inicio" name="fecha_inicio">
-                        
-                        <label for="fecha_fin">Fecha de fin:</label>
-                        <input type="date" id="fecha_fin" name="fecha_fin">
-                        
-                        <select name="selecion" id="selecion">
-                            <option value="">Seleciona un Metodo...</option>
-                            <optgroup label="Metodos">
-                                <option value="diario">Diario</option>
-                                <option value="semanal">Semanal</option>
-                                <option value="trimestral">Trimestral</option>
-                                <option value="mensual">Mensual</option>
-                                <option value="anual">Anual</option>
-                            </optgroup>
-                        </select>
-
-                        <button type="submit">Filtrar</button>
-                    </form>
+                    <h2>Cierre de Caja</h2>
+                    <form action="/cierre" method="post">
+                        <label for="">Observaciones: </label>
+                        <textarea name="observacion" rows="4" cols="50"></textarea>  
+                        <button type="submit">Enviar</button>
+                    </form> 
                 </div>
             </div>
+
         </article>
     </main>
 
@@ -701,16 +691,16 @@
             mainContent.classList.remove('hidden');
         });
 
-        var modal = document.getElementById('loginModal');
-        var btn = document.getElementById("filtrar");
+        var modal = document.getElementById('Observacion-from');
+        var btn = document.getElementById("cierre");
         var span = document.getElementsByClassName("close")[0];
       
         btn.onclick = function() {
-            modal.style.display = "block";
+          modal.style.display = "block";
         }
       
         span.onclick = function() {
-            modal.style.display = "none";
+          modal.style.display = "none";
         }
       
         window.onclick = function(event) {
@@ -718,7 +708,6 @@
             modal.style.display = "none";
           }
         }
-
     </script>
 </body>
 </html>

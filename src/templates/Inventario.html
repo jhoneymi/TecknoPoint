@@ -44,6 +44,12 @@
             text-align: center;
         }
 
+        .red {
+            padding: 10px;
+            text-align: center;
+            color: red;
+        }
+
         th {
             background-color: #f2f2f2;
             border-bottom: 2px solid #ddd;
@@ -240,6 +246,16 @@
             border-radius: 8px;
         }
 
+        .modal-content1 {
+            background-color: #fefefe;
+            margin: 10% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 90%;
+            max-width: 600px;
+            border-radius: 8px;
+        }
+
         .close {
             color: #aaa;
             float: right;
@@ -383,13 +399,16 @@
                         <td>{{ fila.1 }}</td>
                         <td>{{ fila.2 }}$</td>
                         <td>{{ fila.3 }}%</td>
-                        <td>{{ fila.4 }}</td>
+                        {% if fila.4 < 6 %}
+                            <td class="red" >{{ fila.4 }}</td>
+                        {% else %}
+                            <td>{{ fila.4 }}</td>
+                        {% endif %}
                         <td>{{ fila.6 }}</td>
                         <td>
                             <a href="/edit/{{ fila.0 }}"><button id="edit">Editar</button></a>
                             <a href="/remove_art/{{ fila.0 }}"><button id="remove" class="Borrar">Borrar</button></a>
                         </td>
-                        <!-- Agrega más celdas según tu esquema de base de datos -->
                     </tr>
                     {% endfor %}
                 {% else %}
@@ -488,11 +507,57 @@
     </div>
 
     <div id="loginModal-1" class="modal">
-        <div class="modal-content">
+        <div class="modal-content1">
           <span class="close-1">&times;</span>
           <h2>Search Employed</h2>
-            <input type="text" id="busqueda" placeholder="Buscar...">
-            <ul id="resultados"></ul>
+            <input type="text" id="busqueda" name="busqueda" placeholder="Buscar...">
+            <table>
+                <tr>
+                    <th>Image</th>
+                    <th>Articulo</th>
+                    <th>Precio</th>
+                    <th>Itbis</th>
+                    <th>Cantidad</th>
+                    <th>Catalogo</th>
+                    <th>Operaciones</th>
+                </tr>
+                {% if datos == busqueda %}
+                    {% for fila in datos %}
+                    <tr>
+                        <td><img src="{{ url_for('static', filename='uploads/' + fila[7]) }}" alt="{{ fila.6 }}"></td>
+                        <td>{{ fila.1 }}</td>
+                        <td>{{ fila.2 }}$</td>
+                        <td>{{ fila.3 }}%</td>
+                        {% if fila.4 < 6 %}
+                            <td class="red" >{{ fila.4 }}</td>
+                        {% else %}
+                            <td>{{ fila.4 }}</td>
+                        {% endif %}
+                        <td>{{ fila.6 }}</td>
+                        {% if fila.4 < 6 %}
+                            <td>
+                                <a href=""><button id="remove"><i class="fa-solid fa-triangle-exclamation"></button></i></a>
+                                <a href="/edit/{{ fila.0 }}"><button id="edit">Editar</button></a>
+                                <a href="/remove_art/{{ fila.0 }}"><button id="remove" class="Borrar">Borrar</button></a>
+                            </td>
+                        {% else %}
+                            <td>
+                                <a href="/edit/{{ fila.0 }}"><button id="edit">Editar</button></a>
+                                <a href="/remove_art/{{ fila.0 }}"><button id="remove" class="Borrar">Borrar</button></a>
+                            </td>
+                        {% endif %}
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="7">
+                            <div class="div">
+                                <p>No hay productos</p>
+                            </div>
+                        </td>
+                    </tr>
+                {% endif %}
+            </table>
         </div>
     </div>
 
