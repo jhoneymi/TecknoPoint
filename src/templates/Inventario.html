@@ -6,6 +6,7 @@
     <link rel="stylesheet" href="https://cdn.linearicons.com/free/1.0.0/icon-font.min.css">
     <title>Inventario</title>
     <link rel="icon" href="../static/img/image.png">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         * {
             margin: 0;
@@ -435,7 +436,7 @@
         <div class="modal-content">
           <span class="close">&times;</span>
           <h2>Agregar Articulo</h2>
-          <form method="post" action="{{ url_for('add_article') }}" enctype="multipart/form-data">
+          <form id="Formulario" method="post" action="{{ url_for('add_article') }}" enctype="multipart/form-data">
             <input type="text" id="art_name" name="art_name" placeholder="Nombre del artículo" required>
             <input type="number" step="any" id="art_precio" name="art_precio" placeholder="Precio del artículo" required>
             <input type="number" step="any" id="art_itbis" name="art_itbis" placeholder="Impuesto (%)" required>
@@ -501,7 +502,7 @@
                 </optgroup>
                 <input type="file" name="image" accept="image/*" required>
             </select>
-            <button type="submit">Agregar</button>
+            <button type="submit" id="agregar">Agregar</button>
           </form>
         </div>
     </div>
@@ -563,6 +564,17 @@
 
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script>
+
+        document.getElementById('agregar').onclick = function() {
+            Swal.fire({
+                position: "top-end",
+                icon: "success",
+                title: "Se agrego el producto con exito",
+                showConfirmButton: false,
+                timer: 1500
+            });
+        }
+
         $('.lnr-menu').on('click', function() {
             $('.menu').toggleClass("menu-show");
             $('main').toggleClass("main-move")

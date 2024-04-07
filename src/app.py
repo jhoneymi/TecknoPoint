@@ -11,10 +11,11 @@ import io
 #libreria para la factura en PDF
 import pdfkit
 
-# Libreria par el tiempo
+# Librerias para el tiempo
 from datetime import datetime, timedelta
 import time
 
+# Librerias Random
 import random
 import string
 
@@ -24,9 +25,6 @@ from email.message import EmailMessage
 
 
 app = Flask(__name__)
-
-# Definiendo una variable global para controlar si el contador está activo o no
-contador_activo = True
 
 # Ruta al ejecutable de wkhtmltopdf
 wkhtmltopdf_path = r'C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe'
@@ -41,7 +39,14 @@ config = pdfkit.configuration(wkhtmltopdf=wkhtmltopdf_path)
 mensage = ""
 
 # Configuración de la clave secreta para sesiones
-app.secret_key = 'xyzsdfg'
+def aleatoria(longitud):
+    caracteres = string.ascii_letters + string.digits + string.punctuation
+    cadena_aleatoria = ''.join(random.choice(caracteres) for _ in range(longitud))
+    return cadena_aleatoria
+
+cadena = aleatoria(10)
+
+app.secret_key = cadena
 
 # SoketIO Confiuracion de una instacia
 socketio = SocketIO(app)

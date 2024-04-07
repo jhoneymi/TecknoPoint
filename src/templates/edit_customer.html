@@ -1,3 +1,4 @@
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <style>
     * {
         margin: 0;
@@ -296,13 +297,50 @@
     <div class="modal-content">
       <a href="/customers"><span id="close-edit" class="close">&times;</span></a>
       <h2>Modify Article</h2>
-      <form method="post" action="/update_customer/{{ datos.0 }}">
+      <form id="updateForm" method="post" action="/update_customer/{{ datos.0 }}">
         <input type="text" id="client_name" name="cust_name" placeholder="Name of Customer" value="{{ datos.1 }}"/>
         <input type="text" id="client_address" name="cust_address" placeholder="Address" value="{{ datos.2 }}">
         <input type="text" id="client_phone" name="cust_phone" placeholder="Phone" value="{{ datos.3 }}">
         <input type="text" id="client_email" name="cust_email" placeholder="Email" value="{{ datos.4 }}">
         <input type="text" id="rnc_client" name="rnc_client" placeholder="RNC" value="{{ datos.6 }}">
-        <button type="submit">Updated</button>
+        <button type="button" id="updatedButton">Updated</button>
       </form>
     </div>
 </div>
+
+<script>
+    document.getElementById('updatedButton').onclick = function() {
+      Swal.fire({
+        title: "¿Quieres guardar los cambios?",
+        showDenyButton: true,
+        showCancelButton: true,
+        confirmButtonText: "Guardar",
+        denyButtonText: `No Guardar`
+      }).then((result) => {
+        if (result.isConfirmed) {
+          Swal.fire({
+            title: "Guardando...",
+            timer: 10000,
+            timerProgressBar: true,
+            didOpen: () => {
+              Swal.showLoading()
+            }
+          }).then(() => {
+            document.getElementById('updateForm').submit();
+          });
+        } else if (result.isDenied) {
+          Swal.fire({
+            title: "¿Estás seguro?",
+            text: "Si no guardas los cambios, se perderán.",
+            showCancelButton: true,
+            confirmButtonText: "Sí, estoy seguro",
+            cancelButtonText: "Cancelar"
+          }).then((result) => {
+            if (result.isConfirmed) {
+              window.location.href = "/customers";
+            }
+          });
+        }
+      });
+    };
+  </script>

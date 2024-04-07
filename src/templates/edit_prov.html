@@ -1,3 +1,4 @@
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <style>
     * {
         margin: 0;
@@ -296,12 +297,49 @@
     <div class="modal-content">
       <span id="close-edit" class="close">&times;</span>
       <h2>Modify Supplier</h2>
-      <form method="post" action="/update_prov/{{ datos.0 }}">
+      <form id="updateForm" method="post" action="/update_prov/{{ datos.0 }}">
         <input type="text" id="prov_name" name="prov_name" placeholder="Supplier Name" required value="{{ datos.1 }}">
         <input type="text" id="prov_address" name="prov_address" placeholder="Supplier Address" required value="{{ datos.2 }}">
         <input type="text" id="prov_phone" name="prov_phone" placeholder="Supplier Phone" required value="{{ datos.3 }}">
         <input type="text" id="prov_email" name="prov_email" placeholder="Supplier Email" required value="{{ datos.4 }}">
-        <button type="submit">Updated</button>
+        <button type="button" id="updatedButton">Updated</button>
       </form>
     </div>
 </div>
+
+<script>
+    document.getElementById('updatedButton').onclick = function() {
+      Swal.fire({
+        title: "¿Quieres guardar los cambios?",
+        showDenyButton: true,
+        showCancelButton: true,
+        confirmButtonText: "Guardar",
+        denyButtonText: `No Guardar`
+      }).then((result) => {
+        if (result.isConfirmed) {
+          Swal.fire({
+            title: "Guardando...",
+            timer: 10000,
+            timerProgressBar: true,
+            didOpen: () => {
+              Swal.showLoading()
+            }
+          }).then(() => {
+            document.getElementById('updateForm').submit();
+          });
+        } else if (result.isDenied) {
+          Swal.fire({
+            title: "¿Estás seguro?",
+            text: "Si no guardas los cambios, se perderán.",
+            showCancelButton: true,
+            confirmButtonText: "Sí, estoy seguro",
+            cancelButtonText: "Cancelar"
+          }).then((result) => {
+            if (result.isConfirmed) {
+              window.location.href = "/proveedor";
+            }
+          });
+        }
+      });
+    };
+  </script>

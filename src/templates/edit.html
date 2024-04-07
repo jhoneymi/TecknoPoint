@@ -1,3 +1,4 @@
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <style>
     * {
         margin: 0;
@@ -296,7 +297,7 @@
     <div class="modal-content">
       <a href="/inventario"><span id="close-edit" class="close">&times;</span></a>
       <h2>Modify Article</h2>
-      <form method="post" action="/update/{{ datos.0 }}" enctype="multipart/form-data">
+      <form id="updateForm" method="post" action="/update/{{ datos.0 }}" enctype="multipart/form-data">
         <input type="text" id="art_name" name="art_name" placeholder="Nombre del artículo" value="{{ datos.1 }}">
         <input type="number" step="any" id="art_precio" name="art_precio" placeholder="Precio del artículo" value="{{ datos.2 }}">
         <input type="number" step="any" id="art_itbis" name="art_itbis" placeholder="Impuesto (%)" value="{{ datos.3 }}">
@@ -362,7 +363,44 @@
             </optgroup>
             <input type="file" name="image" accept="image/*" value="{{ datos.7 }}">
         </select>
-        <button type="submit">Updated</button>
+        <button type="button" id="updatedButton">Updated</button>
       </form>
     </div>
 </div>
+
+<script>
+    document.getElementById('updatedButton').onclick = function() {
+      Swal.fire({
+        title: "¿Quieres guardar los cambios?",
+        showDenyButton: true,
+        showCancelButton: true,
+        confirmButtonText: "Guardar",
+        denyButtonText: `No Guardar`
+      }).then((result) => {
+        if (result.isConfirmed) {
+          Swal.fire({
+            title: "Guardando...",
+            timer: 10000,
+            timerProgressBar: true,
+            didOpen: () => {
+              Swal.showLoading()
+            }
+          }).then(() => {
+            document.getElementById('updateForm').submit();
+          });
+        } else if (result.isDenied) {
+          Swal.fire({
+            title: "¿Estás seguro?",
+            text: "Si no guardas los cambios, se perderán.",
+            showCancelButton: true,
+            confirmButtonText: "Sí, estoy seguro",
+            cancelButtonText: "Cancelar"
+          }).then((result) => {
+            if (result.isConfirmed) {
+              window.location.href = "/inventario";
+            }
+          });
+        }
+      });
+    };
+  </script>
