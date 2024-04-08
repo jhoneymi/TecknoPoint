@@ -1067,7 +1067,7 @@ def remove_article(id):
     return redirect(url_for('article'))
 
 #!  Inventario
-@app.route('/inventario')
+@app.route('/inventario', methods = ['GET', 'DELETE'])
 def inventario():
     datos = obtener_datos_inv()
     return render_template('inventario.html', datos=datos)
@@ -1109,13 +1109,16 @@ def add_article():
         
     return redirect(url_for('inventario'))
 
-@app.route('/remove_art/<string:id>')
+@app.route('/remove_art/<string:id>', methods=['DELETE'])
 def remove_art(id):
-    cur = mysql.connection.cursor()
-    cur.execute('DELETE FROM products WHERE product_id = {0}'.format(id))
-    mysql.connection.commit()
-    flash('Contact Removed Successfully')
-    return redirect(url_for('inventario'))
+
+    if request.method == 'DELETE':
+
+        cur = mysql.connection.cursor()
+        cur.execute('DELETE FROM products WHERE product_id = {0}'.format(id))
+        mysql.connection.commit()
+        flash('Contact Removed Successfully')
+        return redirect(url_for('inventario'))
 
 @app.route('/edit/<id>')
 def get_art(id):

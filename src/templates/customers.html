@@ -371,13 +371,13 @@
         <div class="modal-content">
           <span class="close">&times;</span>
           <h2>Add Customers</h2>
-          <form method="post" action="{{ url_for('add_customer') }}">
+          <form id="Formulario" method="post" action="{{ url_for('add_customer') }}">
             <input type="text" id="client_name" name="cust_name" placeholder="Name of Customer" required>
             <input type="text" id="client_address" name="cust_address" placeholder="Address" required>
             <input type="text" id="client_phone" name="cust_phone" placeholder="Phone" required>
             <input type="text" id="client_email" name="cust_email" placeholder="Email">
             <input type="text" id="rnc_client" name="rnc_client" placeholder="RNC" required>
-            <button type="submit">Agregar</button>
+            <button id="agregar" type="submit">Agregar</button>
           </form>
         </div>
     </div>
@@ -389,6 +389,71 @@
             $('.menu').toggleClass("menu-show");
             $('main').toggleClass("main-move")
         });
+
+        const botonesBorrar = document.querySelectorAll('.Borrar');
+
+        botonesBorrar.forEach(boton => {
+            boton.onclick = function(event) {
+                event.preventDefault();
+
+                var proveedorId = boton.parentElement.getAttribute("href").split("/").pop();
+                console.log(proveedorId); 
+                const url = "/deactivate_client/" + proveedorId;
+
+                Swal.fire({
+                    title: "¿Quieres eliminar este cliente?",
+                    showDenyButton: true,
+                    showCancelButton: true,
+                    confirmButtonText: "Eliminar",
+                    denyButtonText: `No Eliminar`
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        Swal.fire({
+                            title: "Eliminando",
+                            timer: 5000,
+                            timerProgressBar: true,
+                            didOpen: () => {
+                                Swal.showLoading()
+                            }
+                        }).then(() => {
+                            fetch(url, {
+                                method: 'DELETE'
+                            }).then(response => {
+                                if (response.ok) {
+                                    window.location.reload();
+                                } else {
+                                    Swal.fire({
+                                        title: "Error",
+                                        text: "No se pudo eliminar el cliente.",
+                                        icon: "error"
+                                    });
+                                }
+                            });
+                        });
+                    } else if (result.isDenied) {
+                        Swal.fire({
+                            title: "No se elimino",
+                            icon: "error",
+                            showCancelButton: false,
+                        })
+                    }
+                });
+            };
+        });
+
+        document.getElementById('agregar').onclick = function() {
+            event.preventDefault();
+
+            Swal.fire({
+                position: "top-end",
+                icon: "success",
+                title: "Se agrego el cliente con exito",
+                showConfirmButton: false,
+                timer: 1500
+            }).then(() => {
+                document.getElementById('Formulario').submit();
+            });
+        }
 
         var modal = document.getElementById('loginModal');
         var btn = document.getElementById("loginBtn");

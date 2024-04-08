@@ -662,10 +662,10 @@
                 <div class="modal-content">
                     <span class="close">&times;</span>
                     <h2>Cierre de Caja</h2>
-                    <form action="/cierre" method="post">
+                    <form id="Formulario" action="/cierre" method="post">
                         <label for="">Observaciones: </label>
                         <textarea name="observacion" rows="4" cols="50"></textarea>  
-                        <button type="submit">Enviar</button>
+                        <button id="agregar" type="submit">Enviar</button>
                     </form> 
                 </div>
             </div>
@@ -681,6 +681,20 @@
             $('.menu').toggleClass("menu-show");
             $('main').toggleClass("main-move")
         });
+
+        document.getElementById('agregar').onclick = function() {
+            event.preventDefault();
+
+            Swal.fire({
+                position: "top-end",
+                icon: "success",
+                title: "Se realizo el cierre de caja con exito",
+                showConfirmButton: false,
+                timer: 1500
+            }).then(() => {
+                document.getElementById('Formulario').submit();
+            });
+        }
 
         window.addEventListener('load', function() {
             // Obtén el contenedor de la página de carga

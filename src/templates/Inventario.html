@@ -502,7 +502,7 @@
                 </optgroup>
                 <input type="file" name="image" accept="image/*" required>
             </select>
-            <button type="submit" id="agregar">Agregar</button>
+            <button type="button" id="agregar">Agregar</button>
           </form>
         </div>
     </div>
@@ -539,12 +539,12 @@
                             <td>
                                 <a href=""><button id="remove"><i class="fa-solid fa-triangle-exclamation"></button></i></a>
                                 <a href="/edit/{{ fila.0 }}"><button id="edit">Editar</button></a>
-                                <a href="/remove_art/{{ fila.0 }}"><button id="remove" class="Borrar">Borrar</button></a>
+                                <a href="/remove_art/{{ fila.0 }}"><button id="remove" class="Borrar" value="{{ fila.0 }}">Borrar</button></a>
                             </td>
                         {% else %}
                             <td>
                                 <a href="/edit/{{ fila.0 }}"><button id="edit">Editar</button></a>
-                                <a href="/remove_art/{{ fila.0 }}"><button id="remove" class="Borrar">Borrar</button></a>
+                                <a href="/remove_art/{{ fila.0 }}"><button id="remove" class="Borrar" value="{{ fila.0 }}">Borrar</button></a>
                             </td>
                         {% endif %}
                     </tr>
@@ -566,14 +566,69 @@
     <script>
 
         document.getElementById('agregar').onclick = function() {
+            event.preventDefault();
+
             Swal.fire({
                 position: "top-end",
                 icon: "success",
                 title: "Se agrego el producto con exito",
                 showConfirmButton: false,
                 timer: 1500
+            }).then(() => {
+                document.getElementById('Formulario').submit();
             });
         }
+
+        const botonesBorrar = document.querySelectorAll('.Borrar');
+
+        botonesBorrar.forEach(boton => {
+            boton.onclick = function(event) {
+                event.preventDefault();
+
+                var productoId = boton.parentElement.getAttribute("href").split("/").pop();
+                console.log(productoId); 
+                const url = "/remove_art/" + productoId;
+
+                Swal.fire({
+                    title: "¿Quieres eliminar este producto?",
+                    showDenyButton: true,
+                    showCancelButton: true,
+                    confirmButtonText: "Eliminar",
+                    denyButtonText: `No Eliminar`
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        Swal.fire({
+                            title: "Eliminando",
+                            timer: 5000,
+                            timerProgressBar: true,
+                            didOpen: () => {
+                                Swal.showLoading()
+                            }
+                        }).then(() => {
+                            fetch(url, {
+                                method: 'DELETE'
+                            }).then(response => {
+                                if (response.ok) {
+                                    window.location.reload();
+                                } else {
+                                    Swal.fire({
+                                        title: "Error",
+                                        text: "No se pudo eliminar el producto.",
+                                        icon: "error"
+                                    });
+                                }
+                            });
+                        });
+                    } else if (result.isDenied) {
+                        Swal.fire({
+                            title: "No se elimino",
+                            icon: "error",
+                            showCancelButton: false,
+                        })
+                    }
+                });
+            };
+        });
 
         $('.lnr-menu').on('click', function() {
             $('.menu').toggleClass("menu-show");
