@@ -86,6 +86,10 @@
             background-color: rgb(50, 50, 243);
         }
 
+        .Buscar:hover {
+            background-color: rgb(40, 40, 179);
+        }
+
         .Stock {
             background-color: rgb(153, 0, 153);
         }
@@ -242,7 +246,7 @@
             margin: 10% auto;
             padding: 20px;
             border: 1px solid #888;
-            width: 80%;
+            width: 90%;
             max-width: 450px;
             border-radius: 8px;
         }
@@ -253,7 +257,7 @@
             padding: 20px;
             border: 1px solid #888;
             width: 90%;
-            max-width: 600px;
+            max-width: 700px;
             border-radius: 8px;
         }
 
@@ -358,6 +362,21 @@
         select#categorias option {
             padding: 10px;
             font-size: 16px;
+        }
+
+        /* Establecer un tamaño máximo en altura para el cuerpo de la tabla */
+        #dataTable tbody {
+            max-height: 300px; /* Ajusta este valor según sea necesario */
+            overflow-y: auto; /* Habilitar el desplazamiento vertical */
+        }
+
+        /* Estilos opcionales para mejorar la apariencia de la barra de desplazamiento */
+        #dataTable tbody::-webkit-scrollbar {
+            width: 10px; /* Ancho de la barra de desplazamiento */
+        }
+
+        #dataTable tbody::-webkit-scrollbar-thumb {
+            background-color: #888; /* Color del pulgar de la barra de desplazamiento */
         }
     </style>
 </head>
@@ -511,58 +530,26 @@
         <div class="modal-content1">
           <span class="close-1">&times;</span>
           <h2>Search Employed</h2>
-            <input type="text" id="busqueda" name="busqueda" placeholder="Buscar...">
-            <table>
-                <tr>
-                    <th>Image</th>
-                    <th>Articulo</th>
-                    <th>Precio</th>
-                    <th>Itbis</th>
-                    <th>Cantidad</th>
-                    <th>Catalogo</th>
-                    <th>Operaciones</th>
-                </tr>
-                {% if datos == busqueda %}
-                    {% for fila in datos %}
+            <input type="text" id="searchInput" name="busqueda" placeholder="Buscar...">
+            <table id="dataTable">
+                <thead>
                     <tr>
-                        <td><img src="{{ url_for('static', filename='uploads/' + fila[7]) }}" alt="{{ fila.6 }}"></td>
-                        <td>{{ fila.1 }}</td>
-                        <td>{{ fila.2 }}$</td>
-                        <td>{{ fila.3 }}%</td>
-                        {% if fila.4 < 6 %}
-                            <td class="red" >{{ fila.4 }}</td>
-                        {% else %}
-                            <td>{{ fila.4 }}</td>
-                        {% endif %}
-                        <td>{{ fila.6 }}</td>
-                        {% if fila.4 < 6 %}
-                            <td>
-                                <a href=""><button id="remove"><i class="fa-solid fa-triangle-exclamation"></button></i></a>
-                                <a href="/edit/{{ fila.0 }}"><button id="edit">Editar</button></a>
-                                <a href="/remove_art/{{ fila.0 }}"><button id="remove" class="Borrar" value="{{ fila.0 }}">Borrar</button></a>
-                            </td>
-                        {% else %}
-                            <td>
-                                <a href="/edit/{{ fila.0 }}"><button id="edit">Editar</button></a>
-                                <a href="/remove_art/{{ fila.0 }}"><button id="remove" class="Borrar" value="{{ fila.0 }}">Borrar</button></a>
-                            </td>
-                        {% endif %}
+                        <th>Image</th>
+                        <th>Articulo</th>
+                        <th>Precio</th>
+                        <th>Itbis</th>
+                        <th>Cantidad</th>
+                        <th>Catalogo</th>
+                        <th>Operaciones</th>
                     </tr>
-                    {% endfor %}
-                {% else %}
-                    <tr>
-                        <td colspan="7">
-                            <div class="div">
-                                <p>No hay productos</p>
-                            </div>
-                        </td>
-                    </tr>
-                {% endif %}
+                </thead>
+                <tbody id="searchResults"></tbody>
             </table>
         </div>
     </div>
 
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="{{ url_for('static', filename='js/script2.js') }}"></script>
     <script>
 
         document.getElementById('agregar').onclick = function() {

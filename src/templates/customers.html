@@ -78,6 +78,10 @@
             background-color: rgb(50, 50, 243);
         }
 
+        .Buscar:hover {
+            background-color: rgb(40, 40, 179);
+        }
+
         .Stock {
             background-color: rgb(153, 0, 153);
         }
@@ -205,6 +209,18 @@
             background-color: rgba(0,0,0,0.4);
         }
 
+        #loginModal-1 {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+
         #loginModal-edit {
             display: none;
             position: fixed;
@@ -224,6 +240,16 @@
             border: 1px solid #888;
             width: 80%;
             max-width: 450px;
+            border-radius: 8px;
+        }
+
+        .modal-content1 {
+            background-color: #fefefe;
+            margin: 10% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 90%;
+            max-width: 900px;
             border-radius: 8px;
         }
 
@@ -252,6 +278,21 @@
 
         .close1:hover,
         .close1:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .close-1 {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            margin-top: -10px;
+        }
+
+        .close-1:hover,
+        .close-1:focus {
             color: black;
             text-decoration: none;
             cursor: pointer;
@@ -309,6 +350,26 @@
             padding: 10px;
             font-size: 16px;
         }
+
+        .table-wrapper {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        #employeesTable {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        #employeesTable th, #employeesTable td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        #employeesTable th {
+            background-color: #f2f2f2;
+        }
     </style>
 </head>
 <body>
@@ -361,7 +422,7 @@
             <table>
                 <tr>
                     <th><button id="loginBtn" class="Agregar">Add Customers</button></th>
-                    <th><button class="Buscar">Buscar Customers por Nombre</button></th>
+                    <th><button id="searchBtn" class="Buscar">Buscar Customers por Nombre</button></th>
                 </tr>
             </table>
         </article>
@@ -382,8 +443,43 @@
         </div>
     </div>
 
+    <div id="loginModal-1" class="modal">
+        <div class="modal-content1">
+            <span class="close-1">&times;</span>
+            <h2>Search Supplier</h2>
+            <input type="text" id="searchInput" name="busqueda" placeholder="Buscar...">
+            <div class="table-wrapper">
+                <table id="customersTable">
+                    <tr>
+                        <th>Customers Name</th>
+                        <th>Address</th>
+                        <th>Phone</th>
+                        <th>email</th>
+                        <th>RNC</th>
+                        <th>Operaciones</th>
+                        <!-- Agrega más columnas según tu esquema de base de datos -->
+                    </tr>
+                    {% for fila in clientes %}
+                    <tr>
+                        <td>{{ fila.1 }}</td>
+                        <td>{{ fila.2 }}</td>
+                        <td>{{ fila.3 }}</td>
+                        <td>{{ fila.4 }}</td>
+                        <td>{{ fila.6 }}</td>
+                        <td>
+                            <a href="/edit_customer/{{ fila.0 }}"><button id="edit">Edit</button></a>
+                            <a href="/deactivate_client/{{ fila.0 }}"><button id="remove" class="Borrar">Delete</button></a>
+                        </td>
+                        <!-- Agrega más celdas según tu esquema de base de datos -->
+                    </tr>
+                    {% endfor %}
+                </table>
+            </div>
+        </div>
+    </div>
 
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="{{ url_for('static', filename='js/script1.js') }}"></script>
     <script>
         $('.lnr-menu').on('click', function() {
             $('.menu').toggleClass("menu-show");
@@ -453,6 +549,24 @@
             }).then(() => {
                 document.getElementById('Formulario').submit();
             });
+        }
+
+        var modal_search = document.getElementById("loginModal-1");
+        var search = document.getElementById("searchBtn");
+        var span_search = document.getElementsByClassName("close-1")[0];
+      
+        search.onclick = function() {
+            modal_search.style.display = "block";
+        }
+      
+        span_search.onclick = function() {
+            modal_search.style.display = "none";
+        }
+      
+        window.onclick = function(event) {
+          if (event.target == modal_search) {
+            modal_search.style.display = "none";
+          }
         }
 
         var modal = document.getElementById('loginModal');

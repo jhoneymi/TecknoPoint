@@ -869,8 +869,15 @@ def update_customer(id):
         mysql.connection.commit()
         flash('Contact Updated Successfully')
         return redirect(url_for('customer'))
-
-
+    
+@app.route('/search_customers', methods=['POST'])
+def search_customers():
+    query = request.form['query']
+    cur = mysql.connection.cursor()
+    cur.execute("SELECT * FROM clients WHERE client_name LIKE %s AND activity_id LIKE %s", ('%' + query + '%', '1'))
+    results = cur.fetchall()
+    cur.close()
+    return jsonify([{'id': result[0], 'name': result[1], 'address': result[2], 'phone': result[3], 'email': result[4], 'rnc': result[6]} for result in results])
 
 #* Articles
 @app.route('/article')
@@ -1071,6 +1078,16 @@ def remove_article(id):
 def inventario():
     datos = obtener_datos_inv()
     return render_template('inventario.html', datos=datos)
+
+@app.route('/search', methods=['POST'])
+def search():
+    query = request.form['query']
+    cur = mysql.connection.cursor()
+    cur.execute("SELECT * FROM products WHERE product_name LIKE %s", ('%' + query + '%',))
+    results = cur.fetchall()
+    cur.close()
+    print(results)
+    return jsonify(results)
 
 @app.route('/obtener_datos_inv')
 def  obtener_datos_inv():
@@ -1389,6 +1406,15 @@ def  add_prov():
             cur.close()
 
         return redirect(url_for('proveedor'))
+
+@app.route('/search_suppliers', methods=['POST'])
+def search_suppliers():
+    query = request.form['query']
+    cur = mysql.connection.cursor()
+    cur.execute("SELECT * FROM suppliers WHERE supplier_name LIKE %s ", ('%' + query + '%',))
+    results = cur.fetchall()
+    cur.close()
+    return jsonify([{'id': result[0], 'name': result[1], 'address': result[2], 'phone': result[3], 'email': result[4]} for result in results])
 
 #! Empleados
 
@@ -1858,20 +1884,15 @@ def update_emp(id):
         mysql.connection.commit()
         flash('Contact Updated Successfully')
         return redirect(url_for('empleados'))
-    
-@app.route('/search_emp', methods = ['POST', 'GET'])
-def  search_employee():
 
-    if request.form == 'POST':
-        query = request.form['fullname']
-
-        cursor = mysql.connection.cursor()
-        cursor.execute("SELECT * FROM users WHERE fullname = %s AND role_id = %s",(query,'3'))
-        data = cursor.fetchall()
-        cursor.close()
-
-        empleados = data
-    return render_template('/empleados.html', empleados = empleados)
+@app.route('/search_employees', methods=['POST'])
+def search_employees():
+    query = request.form['query']
+    cur = mysql.connection.cursor()
+    cur.execute("SELECT * FROM users WHERE fullname LIKE %s AND role_id = %s", ('%' + query + '%','3'))
+    results = cur.fetchall()
+    cur.close()
+    return jsonify(results)
 
 
 

@@ -171,6 +171,10 @@
             background-color: rgb(50, 50, 243);
         }
 
+        .Buscar:hover {
+            background-color: rgb(40, 40, 179);
+        }
+
         .Stock {
             background-color: rgb(153, 0, 153);
         }
@@ -225,6 +229,16 @@
             border: 1px solid #888;
             width: 80%;
             max-width: 450px;
+            border-radius: 8px;
+        }
+
+        .modal-content1 {
+            background-color: #fefefe;
+            margin: 10% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 90%;
+            max-width: 800px;
             border-radius: 8px;
         }
 
@@ -297,6 +311,26 @@
             border-color: #4CAF50;
         }
 
+        .table-wrapper {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        #employeesTable {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        #employeesTable th, #employeesTable td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        #employeesTable th {
+            background-color: #f2f2f2;
+        }
+
     </style>
 </head>
 <body>
@@ -344,12 +378,12 @@
                 </tr>
                 {% endfor %}
             </table>
-        <table>
-            <tr>
-                <th><button id="loginBtn" class="Agregar">Add Employee</button></th>
-                <th><button id= "searchBtn" class="Buscar">Search Employee by Name</button></th>
-            </tr>
-        </table>
+            <table>
+                <tr>
+                    <th><button id="loginBtn" class="Agregar">Add Employee</button></th>
+                    <th><button id= "searchBtn" class="Buscar">Search Employee by Name</button></th>
+                </tr>
+            </table>
         </article>
     </main>
 
@@ -368,18 +402,39 @@
     </div>
 
     <div id="loginModal-1" class="modal">
-        <div class="modal-content">
-          <span class="close-1">&times;</span>
-          <h2>Search Employed</h2>
-          <form method="post" action="{{ url_for('search_employee') }}">
-            <input type="text" id="fullname" name="fullname" placeholder="Fullname" required>
-            <button type="submit">Search</button>
-          </form>
+        <div class="modal-content1">
+            <span class="close-1">&times;</span>
+            <h2>Search Employed</h2>
+            <input type="text" id="searchInput" name="busqueda" placeholder="Buscar...">
+            <div class="table-wrapper">
+                <table id="employeesTable">
+                    <tr>
+                        <th>Fullname</th>
+                        <th>Email</th>
+                        <th>Username</th>
+                        <th>Password</th>
+                        <th>Operations</th>
+                    </tr>
+                    {% for fila in empleados %}
+                    <tr>
+                        <td>{{ fila[1] }}</td>
+                        <td>{{ fila[2] }}</td>
+                        <td>{{ fila[3] }}</td>
+                        <td>NULL</td>
+                        <td>
+                            <a href="/edit_emp/{{ fila[0] }}"><button id="edit">Edit</button></a>
+                            <a href="/remove_emp/{{ fila[0] }}"><button id="remove" class="Borrar">Delete</button></a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </table>
+            </div>
         </div>
     </div>
 
 
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="{{ url_for('static', filename='js/script3.js') }}"></script>
     <script>
         $('.lnr-menu').on('click', function() {
             $('.menu').toggleClass("menu-show");
