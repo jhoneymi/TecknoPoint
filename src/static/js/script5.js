@@ -1,12 +1,12 @@
 document.addEventListener('DOMContentLoaded', function () {
-    const searchInput = document.getElementById('searchInput');
-    const customersTable = document.getElementById('customersTable');
+    const searchInput = document.getElementById('searchInput_inactive');
+    const customersTable = document.getElementById('customersTable_inactive');
     const tbody = customersTable.querySelector('tbody');
 
     searchInput.addEventListener('input', function () {
         const query = this.value;
 
-        fetch('/search_customers', {
+        fetch('/search_customers_inactive', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded',
@@ -26,8 +26,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     <td>${client.email}</td>
                     <td>${client.rnc}</td>
                     <td>
-                        <a href="/edit_customer/${client.id}"><button id="edit">Edit</button></a>
-                        <a href="/deactivate_client/${client.id}"><button id="remove" class="Borrar">Delete</button></a>
+                        <a href="/active/${client.id}"><button id="edit">activar</button></a>
                     </td>`;
                 tbody.appendChild(tr);
             });

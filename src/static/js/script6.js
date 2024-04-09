@@ -1,12 +1,12 @@
 document.addEventListener('DOMContentLoaded', function () {
     const searchInput = document.getElementById('searchInput');
-    const customersTable = document.getElementById('customersTable');
-    const tbody = customersTable.querySelector('tbody');
+    const dataTable = document.getElementById('dataTable');
+    const tbody = dataTable.querySelector('tbody');
 
     searchInput.addEventListener('input', function () {
         const query = this.value;
 
-        fetch('/search_customers', {
+        fetch('/search', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded',
@@ -15,19 +15,20 @@ document.addEventListener('DOMContentLoaded', function () {
         })
         .then(response => response.json())
         .then(data => {
+
             tbody.innerHTML = '';
 
-            data.forEach(client => {
+            data.forEach(fila => {
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td>${client.name}</td>
-                    <td>${client.address}</td>
-                    <td>${client.phone}</td>
-                    <td>${client.email}</td>
-                    <td>${client.rnc}</td>
+                    <td><img src="{{ url_for('static', filename='uploads/' + ${fila[7]}) }}" alt="${fila[6]}"></td>
+                    <td>${fila[1]}</td>
+                    <td>${fila[2]}$</td>
+                    <td>${fila[3]}%</td>
+                    <td>${fila[4]}</td>
+                    <td>${fila[6]}</td>
                     <td>
-                        <a href="/edit_customer/${client.id}"><button id="edit">Edit</button></a>
-                        <a href="/deactivate_client/${client.id}"><button id="remove" class="Borrar">Delete</button></a>
+                        <a href="/incluir_art/${fila[0]}"><button id="edit">Incluir</button></a>
                     </td>`;
                 tbody.appendChild(tr);
             });

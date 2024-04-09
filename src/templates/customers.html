@@ -6,6 +6,7 @@
     <link rel="stylesheet" href="https://cdn.linearicons.com/free/1.0.0/icon-font.min.css">
     <title>Customers</title>
     <link rel="icon" href="../static/img/image.png">
+    <script src="https://kit.fontawesome.com/5ef1b31399.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         * {
@@ -233,6 +234,18 @@
             background-color: rgba(0,0,0,0.4);
         }
 
+        #loginModal-active {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+
         .modal-content {
             background-color: #fefefe;
             margin: 10% auto;
@@ -240,6 +253,16 @@
             border: 1px solid #888;
             width: 80%;
             max-width: 450px;
+            border-radius: 8px;
+        }
+
+        .modal-content-active {
+            background-color: #fefefe;
+            margin: 10% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 90%;
+            max-width: 850px;
             border-radius: 8px;
         }
 
@@ -293,6 +316,21 @@
 
         .close-1:hover,
         .close-1:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .close-active {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            margin-top: -10px;
+        }
+
+        .close-active:hover,
+        .close-active:focus {
             color: black;
             text-decoration: none;
             cursor: pointer;
@@ -370,6 +408,22 @@
         #employeesTable th {
             background-color: #f2f2f2;
         }
+
+        .inactive {
+            background-color: transparent;
+            width: 10px;
+            height: 10px;
+            margin-top: -50px;
+            margin-left: 84rem;
+            margin-bottom: 40px;
+            font-size: 20px;
+            color: #000000;
+        }
+
+        .inactive:hover {
+            background-color: transparent;
+        }
+        
     </style>
 </head>
 <body>
@@ -392,6 +446,7 @@
     </div>
 
     <main>
+        <button class="inactive" id="INCT"><i class="fa-solid fa-user"></i></button>
         <article>
             <h1>Customers</h1>
             <table>
@@ -478,13 +533,64 @@
         </div>
     </div>
 
+    <div id="loginModal-active" class="modal">
+        <div class="modal-content-active">
+          <span class="close-active">&times;</span>
+          <h2>Clientes Desactivos</h2>
+          <input type="text" id="searchInput_inactive" name="busqueda" placeholder="Buscar...">
+          <div class="table-wrapper">
+                <table id="customersTable_inactive">
+                    <tr>
+                        <th>Customers Name</th>
+                        <th>Address</th>
+                        <th>Phone</th>
+                        <th>email</th>
+                        <th>RNC</th>
+                        <th>Operacion</th>
+                    </tr>
+                    {% for fila in INCT %}
+                    <tr>
+                        <td>{{ fila.1 }}</td>
+                        <td>{{ fila.2 }}</td>
+                        <td>{{ fila.3 }}</td>
+                        <td>{{ fila.4 }}</td>
+                        <td>{{ fila.6 }}</td>
+                        <td>
+                            <a href="/active/{{ fila.0 }}"><button class="active" id="active">activar</button></a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </table>
+            </div>
+        </div>
+    </div>
+
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="{{ url_for('static', filename='js/script1.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/script5.js') }}"></script>
     <script>
         $('.lnr-menu').on('click', function() {
             $('.menu').toggleClass("menu-show");
             $('main').toggleClass("main-move")
         });
+
+        var modal_active = document.getElementById('loginModal-active');
+        var btn_active = document.getElementById("INCT");
+        var span_active = document.getElementsByClassName("close-active")[0];
+      
+        btn_active.onclick = function() {
+            modal_active.style.display = "block";
+        }
+      
+        span_active.onclick = function() {
+            modal_active.style.display = "none";
+        }
+      
+        window.onclick = function(event) {
+          if (event.target == modal_active) {
+            modal_active.style.display = "none";
+          }
+        }
 
         const botonesBorrar = document.querySelectorAll('.Borrar');
 
@@ -506,7 +612,7 @@
                     if (result.isConfirmed) {
                         Swal.fire({
                             title: "Eliminando",
-                            timer: 5000,
+                            timer: 3000,
                             timerProgressBar: true,
                             didOpen: () => {
                                 Swal.showLoading()

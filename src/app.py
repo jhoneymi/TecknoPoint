@@ -63,7 +63,6 @@ mysql = MySQL(app)
 # Loader
 @app.route('/loader')
 def loader():
-    intermedio
     return render_template('loader.html')
 
 def intermedio():
@@ -84,17 +83,13 @@ def contador():
 # Manejador de error para URL no encontrada (404)
 @app.errorhandler(404)
 def page_not_found(error):
-    # Obtenemos la URL de la página anterior
     previous_page = request.referrer
-    # Si no hay una URL anterior, redirigimos a la página principal
     if previous_page is None:
         return redirect(url_for('index'))
-    # De lo contrario, redirigimos a la página anterior
     return redirect(previous_page)
 
 #~ enviar facturas
 def enviar(id):
-    # Verifica si ya existe un archivo "factura.pdf" y elimínalo si es necesario
     pdf_output_path = os.path.join(pdf_output_folder, 'factura.pdf')
     if os.path.exists(pdf_output_path):
         os.remove(pdf_output_path)
@@ -155,8 +150,11 @@ def enviar_e():
 #^ Cierre de Caja
 @app.route('/closing')
 def closing():
-    closes = obtener_closing()
-    return render_template('closing.html', close = closes)
+    if session['logged in'] == True:
+        closes = obtener_closing()
+        return render_template('closing.html', close = closes)
+    else:
+        return redirect(url_for('login'))
 
 def obtener_closing():
     cur = mysql.connection.cursor()
@@ -624,7 +622,7 @@ def active(id):
     mysql.connection.commit()
     cur.close()
 
-    return redirect(url_for('inicio'))
+    return redirect(url_for('customer'))
 
 
 #! Search
@@ -644,7 +642,7 @@ def buscar_en_bd(query):
 #* Inicio
 @app.route('/')
 def index():
-    return redirect(url_for('login'))
+    return redirect(url_for('loader'))
 
 #& Help
 @app.route("/help")
@@ -654,16 +652,22 @@ def help():
 #?  Inicio
 @app.route('/inicio', methods = ['GET', 'POST'])
 def inicio():
-    customer = obtener_customer()
-    INCT = inactive()
-    return render_template('inicio.html', INCT = INCT, CUST = customer)
+    if session['logged in'] == True:
+        customer = obtener_customer()
+        INCT = inactive()
+        return render_template('inicio.html', INCT = INCT, CUST = customer)
+    else:
+        return redirect(url_for('login'))
 
 #*  Admin
 @app.route('/admin', methods = ['GET','POST'])
 def  admin():
-    users = obtener_Users()
-    time = obtener_tiempo()
-    return render_template('admin.html', time = time, users = users)
+    if session['logged in'] == True:
+        users = obtener_Users()
+        time = obtener_tiempo()
+        return render_template('admin.html', time = time, users = users)
+    else:
+        return redirect(url_for('login'))
 
 def obtener_Users():
     cur = mysql.connection.cursor()
@@ -682,14 +686,17 @@ def obtener_tiempo():
 #! History
 @app.route('/history', methods=['GET','POST'])
 def history():
-    historys = obtener_historys()
-    total = 0
+    if session['logged in'] == True:
+        historys = obtener_historys()
+        total = 0
 
-    for fila in historys:
+        for fila in historys:
 
-        total += fila[11]
+            total += fila[11]
 
-    return render_template('history.html', history = historys, total = total)
+        return render_template('history.html', history = historys, total = total)
+    else:
+        return redirect(url_for('login'))
 
 def obtener_historys():
     cur = mysql.connection.cursor()
@@ -754,8 +761,12 @@ def obtener_filtro_history(fecha_inicio, fecha_fin):
 #* Bills
 @app.route('/bills', methods=['GET','POST'])
 def bill():
-    bills = obtener_bills()
-    return render_template('bills.html', bills = bills)
+    if session['logged in'] == True:
+        bills = obtener_bills()
+        return render_template('bills.html', bills = bills)
+    else:
+        return redirect(url_for('login'))
+
 
 @app.route('/bills_table')
 def obtener_bills():
@@ -805,10 +816,14 @@ def factura_detalle(id):
     return render_template("detalle.html", bill=bill, detail=detail, total_general=total_general_formatted, fecha = fecha_V)
 
 #TODO Customers
-@app.route('/customers')
+@app.route('/customers', methods = ['GET', 'DELETE'])
 def customer():
-    clientes = obtener_customer()
-    return render_template('customers.html', clientes=clientes)
+    if session['logged in'] == True:
+        clientes = obtener_customer()
+        INCT = inactive()
+        return render_template('customers.html', INCT = INCT, clientes=clientes)
+    else:
+        return redirect(url_for('login'))
 
 @app.route('/obtener_customer')
 def obtener_customer():
@@ -838,12 +853,13 @@ def add_customer():
 
         return redirect(url_for('customer'))
     
-@app.route('/deactivate_client/<int:id>')
+@app.route('/deactivate_client/<int:id>', methods = ['GET', 'DELETE'])
 def deactivate_client(id):
-    cur = mysql.connection.cursor()
-    cur.execute("UPDATE clients SET activity_id = %s WHERE client_id = %s",(2,id))
-    mysql.connection.commit()
-    cur.close()
+    if request.method == 'DELETE':
+        cur = mysql.connection.cursor()
+        cur.execute("UPDATE clients SET activity_id = %s WHERE client_id = %s",(2,id))
+        mysql.connection.commit()
+        cur.close()
 
     return redirect(url_for('customer'))
 
@@ -879,15 +895,28 @@ def search_customers():
     cur.close()
     return jsonify([{'id': result[0], 'name': result[1], 'address': result[2], 'phone': result[3], 'email': result[4], 'rnc': result[6]} for result in results])
 
+@app.route('/search_customers_inactive', methods=['POST'])
+def search_customers_inactive():
+    query = request.form['query']
+    cur = mysql.connection.cursor()
+    cur.execute("SELECT * FROM clients WHERE client_name LIKE %s AND activity_id LIKE %s", ('%' + query + '%', '2'))
+    results = cur.fetchall()
+    cur.close()
+    return jsonify([{'id': result[0], 'name': result[1], 'address': result[2], 'phone': result[3], 'email': result[4], 'rnc': result[6]} for result in results])
+
+
 #* Articles
 @app.route('/article')
 def article():
-    datos = obtener_datos_inv()
-    articles = obtener_articles()
-    customer = obtener_customer()
-    employees = obtener_datos_emp()
-    calculo = calculos()
-    return render_template('articles.html', datos = datos, articles = articles, calculo = calculo, customer = customer, emp = employees, fullname = session['fullname'])
+    if session['logged in'] == True:
+        datos = obtener_datos_inv()
+        articles = obtener_articles()
+        customer = obtener_customer()
+        employees = obtener_datos_emp()
+        calculo = calculos()
+        return render_template('articles.html', datos = datos, articles = articles, calculo = calculo, customer = customer, emp = employees, fullname = session['fullname'])
+    else:
+        return redirect(url_for('login'))
 
 @app.route('/calculos')
 def calculos():
@@ -1076,8 +1105,11 @@ def remove_article(id):
 #!  Inventario
 @app.route('/inventario', methods = ['GET', 'DELETE'])
 def inventario():
-    datos = obtener_datos_inv()
-    return render_template('inventario.html', datos=datos)
+    if session['logged in'] == True:
+        datos = obtener_datos_inv()
+        return render_template('inventario.html', datos=datos)
+    else:
+        return redirect(url_for('login'))
 
 @app.route('/search', methods=['POST'])
 def search():
@@ -1140,7 +1172,7 @@ def remove_art(id):
 @app.route('/edit/<id>')
 def get_art(id):
         cur = mysql.connection.cursor()
-        cur.execute(' SELECT * FROM products WHERE product_id = %s', (id))
+        cur.execute(' SELECT * FROM products WHERE product_id = %s', (id,))
         data = cur.fetchall()
         return render_template('edit.html',datos = data[0])
 
@@ -1158,7 +1190,10 @@ def update(id):
 
         if art_imagen.filename != '':
             art_imagen.save(os.path.join(app.config['UPLOAD_FOLDER'], art_imagen.filename))
-
+        elif art_imagen.filename == '':
+            cur = mysql.connection.cursor()
+            cur.execute('SELECT image FROM products WHERE product_id = %s',(id,))
+            art_imagen.filename = cur.fetchone()
 
         cur = mysql.connection.cursor()
         cur.execute('UPDATE products SET product_name = %s, product_price = %s, product_itbis = %s, product_amount = %s, amount = product_amount, product_catalogue = %s, image = %s WHERE product_id = %s', (art_name, art_price, art_itbis, art_cant, art_catalogo,art_imagen.filename,id))
@@ -1170,6 +1205,9 @@ def update(id):
 #TODO  Login
 @app.route('/login', methods=['GET','POST'])
 def login():
+
+    session['logged in'] = False
+
     if request.method == 'POST':
         username = request.form['username']
         email = request.form['email']
@@ -1344,13 +1382,16 @@ def logout():
     mensage = 'Sesión cerrada exitosamente', 'success'
 
     flash(message=mensage)
-    return redirect(url_for('login'))
+    return redirect(url_for('loader'))
 
 #?  Proveedores
-@app.route('/proveedor')
+@app.route('/proveedor', methods = ['GET', 'DELETE'])
 def proveedor():
-    prov = obtener_datos_prov()
-    return render_template('proveedores.html', prov=prov)
+    if session['logged in'] == True:
+        prov = obtener_datos_prov()
+        return render_template('proveedores.html', prov=prov)
+    else:
+        return redirect(url_for('login'))
 
 @app.route('/obtener_datos_prov')
 def  obtener_datos_prov():
@@ -1360,13 +1401,14 @@ def  obtener_datos_prov():
     cursor.close()
     return prov
 
-@app.route('/remove_prov/<string:id>')
+@app.route('/remove_prov/<string:id>', methods = ['GET','DELETE'])
 def remove_prov(id):
-    cur = mysql.connection.cursor()
-    cur.execute('DELETE FROM suppliers WHERE supplier_id = {0}'.format(id))
-    mysql.connection.commit()
-    flash('Contact Removed Successfully')
-    return redirect(url_for('proveedor'))
+    if request.method == 'DELETE':
+        cur = mysql.connection.cursor()
+        cur.execute('DELETE FROM suppliers WHERE supplier_id = {0}'.format(id))
+        mysql.connection.commit()
+        flash('Contact Removed Successfully')
+        return redirect(url_for('proveedor'))
 
 @app.route('/edit_prov/<id>')
 def get_prov(id):
@@ -1401,7 +1443,7 @@ def  add_prov():
             prov_email = request.form['prov_email']
 
             cur = mysql.connection.cursor()
-            cur.execute("INSERT INTO suppliers (supplier_name, supplier_address, supplier_phone, supplier_email) VALUES (%s,%s,%s,%s)", (prov_name, prov_address, prov_phone, prov_email))
+            cur.execute("INSERT INTO suppliers (supplier_name, supplier_address, supplier_phone, supplier_email, activity_id) VALUES (%s,%s,%s,%s,%s)", (prov_name, prov_address, prov_phone, prov_email,'1'))
             mysql.connection.commit()
             cur.close()
 
@@ -1420,7 +1462,10 @@ def search_suppliers():
 
 @app.route('/inicio_emp')
 def inicio_emp():
-    return render_template('/inicio_emp.html')
+    if session['logged in'] == True:
+        return render_template('/inicio_emp.html')
+    else:
+        return redirect(url_for('login'))
 
 @app.route('/bills_emp')
 def bill_emp():
@@ -1475,12 +1520,15 @@ def factura_detalle_emp(id):
 
 @app.route('/article_emp')
 def article_emp():
-    datos = obtener_datos_inv()
-    articles = obtener_articles_emp()
-    customer = obtener_customer()
-    employees = obtener_datos_emp()
-    calculo = calculos_emp()
-    return render_template('articles_emp.html', datos = datos, articles = articles, calculo = calculo, customer = customer, emp = employees, fullname = session['fullname'])
+    if session['logged in'] == True:
+        datos = obtener_datos_inv()
+        articles = obtener_articles_emp()
+        customer = obtener_customer()
+        employees = obtener_datos_emp()
+        calculo = calculos_emp()
+        return render_template('articles_emp.html', datos = datos, articles = articles, calculo = calculo, customer = customer, emp = employees, fullname = session['fullname'])
+    else:
+        return redirect(url_for('login'))
 
 @app.route('/calculos_emp')
 def calculos_emp():
@@ -1817,10 +1865,13 @@ def cierre_emp():
 
 #? Empleados Funcion
 
-@app.route('/empleados')
+@app.route('/empleados', methods = ['GET', 'DELETE'])
 def empleados():
-    empleados = obtener_datos_emp()
-    return render_template('/empleados.html', empleados=empleados)
+    if session['logged in'] == True:
+        empleados = obtener_datos_emp()
+        return render_template('/empleados.html', empleados=empleados)
+    else:
+        return redirect(url_for('login'))
 
 @app.route('/obtener_datos_emp')
 def  obtener_datos_emp():
@@ -1850,13 +1901,15 @@ def add_emp():
 
         return redirect(url_for('empleados'))
     
-@app.route('/remove_emp/<string:id>')
+@app.route('/remove_emp/<string:id>', methods = ['GET', 'DELETE'])
 def remove_emp(id):
-    cur = mysql.connection.cursor()
-    cur.execute('DELETE FROM users WHERE user_id = {0}'.format(id))
-    mysql.connection.commit()
-    flash('Contact Removed Successfully')
-    return redirect(url_for('empleados'))
+    if request.method == 'DELETE':
+        cur = mysql.connection.cursor()
+        cur.execute('DELETE FROM time WHERE id_users = {0}'.format(id))
+        cur.execute('DELETE FROM users WHERE user_id = {0}'.format(id))
+        mysql.connection.commit()
+        flash('Contact Removed Successfully')
+        return redirect(url_for('empleados'))
 
 @app.route('/edit_emp/<id>')
 def get_emp(id):
@@ -1893,8 +1946,6 @@ def search_employees():
     results = cur.fetchall()
     cur.close()
     return jsonify(results)
-
-
 
 
 if __name__ == '__main__':

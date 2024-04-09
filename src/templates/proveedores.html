@@ -356,6 +356,23 @@
             background-color: #f2f2f2;
         }
 
+        .inactive {
+            font-size: 20px;
+            position: relative;
+            top: 5px;
+            left: 205vh;
+            color: white;
+            border: 1px solid transparent;
+            transition: all 300ms;
+            padding: 2px;
+            cursor: pointer;
+            background-color: transparent;
+        }
+
+        .inactive:hover {
+            background-color: transparent;
+        }
+
     </style>
 </head>
 <body>
@@ -485,7 +502,7 @@
                     if (result.isConfirmed) {
                         Swal.fire({
                             title: "Eliminando",
-                            timer: 5000,
+                            timer: 3000,
                             timerProgressBar: true,
                             didOpen: () => {
                                 Swal.showLoading()
