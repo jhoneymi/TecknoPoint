@@ -515,7 +515,7 @@
         <a href="/inicio_emp"><div class="line"><label class="lnr lnr-home"><font>Home</font></label></div></a>
         <a href="/bills_emp"><div class="line"><label class="lnr lnr-file-empty"><font>Bills</font></label></div></a>
         <a href="/article_emp"><div class="line"><label class="lnr lnr-cart"><font>Articles</font></label></div></a>
-        <a href=""><div class="line"><label class="lnr lnr-chart-bars"><font>Price</font></label></div></a>
+        <a href="/cotizacion_emp"><div class="line"><label class="lnr lnr-chart-bars"><font>Price</font></label></div></a>
     </div>
 
     <main>
@@ -580,44 +580,45 @@
 
     <div id="loginModal" class="modal">
         <div class="modal-content">
-          <span class="close">&times;</span>
-          <article>
+            <span class="close">&times;</span>
             <h1>Articulos en Inventario</h1>
-            <table>
-                <tr>
-                    <th>Image</th>
-                    <th>Articulo</th>
-                    <th>Precio</th>
-                    <th>Itbis</th>
-                    <th>Cantidad</th>
-                    <th>Catalogo</th>
-                    <th>Operaciones</th>
-                </tr>
-                {% if datos %}
-                    {% for fila in datos %}
+            <input type="text" id="searchInput" name="busqueda" placeholder="Buscar...">
+            <article>
+                <table id="dataTable">
                     <tr>
-                        <td><img src="{{ url_for('static', filename='uploads/' + fila[7]) }}" alt="{{ fila.6 }}"></td>
-                        <td>{{ fila.1 }}</td>
-                        <td>{{ fila.2 }}$</td>
-                        <td>{{ fila.3 }}%</td>
-                        <td>{{ fila.4 }}</td>
-                        <td>{{ fila.6 }}</td>
-                        <td>
-                            <a href="/incluir_art_emp/{{ fila.0 }}"><button id="edit">Incluir</button></a>
-                        </td>
+                        <th>Image</th>
+                        <th>Articulo</th>
+                        <th>Precio</th>
+                        <th>Itbis</th>
+                        <th>Cantidad</th>
+                        <th>Catalogo</th>
+                        <th>Operaciones</th>
                     </tr>
-                    {% endfor %}
-                {% else %}
-                    <tr>
-                        <td colspan="7">
-                            <div class="div">
-                                <p>No hay productos en Inventario</p>
-                            </div>
-                        </td>
-                    </tr>
-                {% endif %}
-            </table>
-        </article>
+                    {% if datos %}
+                        {% for fila in datos %}
+                        <tr>
+                            <td><img src="{{ url_for('static', filename='uploads/' + fila[7]) }}" alt="{{ fila.6 }}"></td>
+                            <td>{{ fila.1 }}</td>
+                            <td>{{ fila.2 }}$</td>
+                            <td>{{ fila.3 }}%</td>
+                            <td>{{ fila.4 }}</td>
+                            <td>{{ fila.6 }}</td>
+                            <td>
+                                <a href="/incluir_art_emp/{{ fila.0 }}"><button id="edit">Incluir</button></a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="7">
+                                <div class="div">
+                                    <p>No hay productos en Inventario</p>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endif %}
+                </table>
+            </article>
         </div>
     </div>
 
@@ -708,6 +709,7 @@
     </div>
 
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="{{ url_for('static', filename='js/script6.js') }}"></script>
     <script>
         document.getElementById('monto').addEventListener('input', function() {
             var montoText = this.value;

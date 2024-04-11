@@ -322,6 +322,34 @@ def descargar_pdf():
 
     return response
 
+@app.route('/descargar_cotizacion_pdf')
+def descargar_cotizacion_pdf():
+
+    id_cotizacion = session['id_cotizacion']
+
+    # URL del contenido a convertir en PDF
+    url = 'http://127.0.0.1:5000/detalle_cotizacion/' + id_cotizacion
+    
+    # Genera el PDF desde la URL
+    pdf = pdfkit.from_url(url, False, configuration=config)
+
+    id_cotizacion_int = int(id_cotizacion)
+    
+    if id_cotizacion_int >= 10:
+        response = make_response(pdf)
+        response.headers['Content-Type'] = 'application/pdf'
+        response.headers['Content-Disposition'] = 'attachment; filename=cotizacion N. 000' + id_cotizacion + '.pdf'
+    elif id_cotizacion_int > 99:
+        response = make_response(pdf)
+        response.headers['Content-Type'] = 'application/pdf'
+        response.headers['Content-Disposition'] = 'attachment; filename=cotizacion N. 00' + id_cotizacion + '.pdf'
+    else:
+        response = make_response(pdf)
+        response.headers['Content-Type'] = 'application/pdf'
+        response.headers['Content-Disposition'] = 'attachment; filename=cotizacion N. 0000' + id_cotizacion + '.pdf'
+
+    return response
+
 
 #? Pago con Tarjeta
 @app.route('/pay', methods=["GET","POST"])
@@ -1298,7 +1326,7 @@ def login():
                     return redirect(url_for('inicio'))
                 elif session['role_id'] == 3:
                     cur = mysql.connection.cursor()
-                    cur.execute('SELECT * FROM time WHERE id_users = %s',(session_id))
+                    cur.execute('SELECT * FROM time WHERE id_users = %s',(session_id,))
                     duplicate = cur.fetchall()
 
                     if duplicate:
@@ -1457,6 +1485,114 @@ def search_suppliers():
     results = cur.fetchall()
     cur.close()
     return jsonify([{'id': result[0], 'name': result[1], 'address': result[2], 'phone': result[3], 'email': result[4]} for result in results])
+
+#* Cotizacion
+@app.route('/cotizacion')
+def cotizacion():
+    cotiz = obtener_cotizacion()
+    return render_template('cotizacion.html', cotiz = cotiz)
+
+@app.route('/cotizacion_table')
+def obtener_cotizacion():
+    cur = mysql.connection.cursor()
+    cur.execute("SELECT * FROM bills WHERE estado = %s",("1"))
+    data = cur.fetchall()
+    cur.close()
+
+    return data
+
+@app.route('/detalle_cotizacion/<id>')
+def detalle_cotizacion(id):
+
+    session['id_cotizacion'] = id
+
+    cur = mysql.connection.cursor()
+    cur.execute("SELECT * FROM bills WHERE id = %s",(id,))
+    bill = cur.fetchall()
+    cur.close()
+
+    cursor = mysql.connection.cursor()
+    cursor.execute("SELECT * FROM art_bill WHERE id_bills = %s",(id,))
+    detail = cursor.fetchall()
+    cursor.close()
+
+    total_general = 0
+
+    for fila in detail:
+        art_price = fila[3]
+        art_itbis = fila[4]
+        art_mount = fila[5]
+
+        subtotal = art_mount * art_price
+        itbis = subtotal + ( subtotal * art_itbis / 100)
+
+        # Calcular el total general sumando subtotal e ITBIS de cada producto
+        total_general += itbis
+    
+    # Formatear los números total_general e itbis con dos decimales
+    total_general_formatted = "{:.2f}".format(total_general)
+    
+    for fila in bill:
+        fecha_N = fila[1]
+
+    fecha_V = fecha_N + timedelta(days=30)
+
+    return render_template("detalle_cotizacion.html", bill=bill, detail=detail, total_general=total_general_formatted, fecha = fecha_V)
+
+
+#? Cotizacion_emp
+
+@app.route('/cotizacion_emp')
+def cotiz_emp():
+    cotiz = obtener_cotizacion_emp()
+    return render_template('cotizacion_emp.html', cotiz = cotiz)
+
+@app.route('/cotizacion_table')
+def obtener_cotizacion_emp():
+    if 'fullname' in session:
+        fullname = session['fullname']
+    cur = mysql.connection.cursor()
+    cur.execute("SELECT * FROM bills WHERE estado = %s AND cashier = %s",("1", fullname))
+    data = cur.fetchall()
+    cur.close()
+
+    return data
+
+@app.route('/cotizacion_detalle_emp/<id>')
+def cotizacion_detalle_emp(id):
+    cur = mysql.connection.cursor()
+    cur.execute("SELECT * FROM bills WHERE id = %s",(id,))
+    bill = cur.fetchall()
+    cur.close()
+
+    cursor = mysql.connection.cursor()
+    cursor.execute("SELECT * FROM art_bill WHERE id_bills = %s",(id,))
+    detail = cursor.fetchall()
+    cursor.close()
+
+    total_general = 0
+
+    for fila in detail:
+        art_price = fila[3]
+        art_itbis = fila[4]
+        art_mount = fila[5]
+
+        subtotal = art_mount * art_price
+        itbis = subtotal + ( subtotal * art_itbis / 100)
+
+        # Calcular el total general sumando subtotal e ITBIS de cada producto
+        total_general += itbis
+    
+    # Formatear los números total_general e itbis con dos decimales
+    total_general_formatted = "{:.2f}".format(total_general)
+    
+    for fila in bill:
+        fecha_N = fila[1]
+
+    fecha_V = fecha_N + timedelta(days=30)
+
+    return render_template("detalle_cotizacion_emp.html", bill=bill, detail=detail, total_general=total_general_formatted, fecha = fecha_V)
+
 
 #! Empleados
 

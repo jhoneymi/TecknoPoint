@@ -604,11 +604,6 @@
     </style>
 </head>
 <body onload="preloader()">
-
-    <div class="loader-container">
-        <div class="loader"></div>
-    </div>
-
     <header>
         <label class="lnr lnr-menu"></label>
         <a class="logout" href="/logout"><i class="fa-solid fa-right-from-bracket"></i></a>
@@ -630,12 +625,11 @@
     <main>
         <article>
             <table>
-                {% if bills %}
-                    {% for fila in bills %}
-                    
+                {% if cotiz %}
+                    {% for fila in cotiz %}
                         <div class="mi-div">
-                            <a class="mi-a" href="/factura_detalle/{{ fila.0 }}">
-                                <h5>Factura N. {{ fila.2 }}</h5>
+                            <a class="mi-a" href="/detalle_cotizacion/{{ fila.0 }}">
+                                <h5>Cotización N. {{ fila.2 }}</h5>
                                 <ul>
                                     <li> <strong>date:</strong> {{ fila.1 }}</li>
                                     <li> <strong>customer:</strong> {{ fila.3 }}</li>
@@ -648,28 +642,10 @@
                     {% endfor %}
                 {% else %}
                     <div class="div">
-                        <p>No hay facturas creadas</p>
+                        <p>No hay cotizaciones realizadas</p>
                     </div>
                 {% endif %}
             </table>
-            <table>
-                <tr>
-                    <button id="cierre" class="cierre">Cierre de Caja</button>
-                </tr>
-            </table>
-
-            <div id="Observacion-from" class="modal">
-                <div class="modal-content">
-                    <span class="close">&times;</span>
-                    <h2>Cierre de Caja</h2>
-                    <form id="Formulario" action="/cierre" method="post">
-                        <label for="">Observaciones: </label>
-                        <textarea name="observacion" rows="4" cols="50"></textarea>  
-                        <button id="agregar" type="submit">Enviar</button>
-                    </form> 
-                </div>
-            </div>
-
         </article>
     </main>
 

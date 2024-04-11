@@ -115,6 +115,18 @@
             border-bottom: 2px solid #ddd;
         }
 
+        .red {
+            padding: 10px;
+            text-align: center;
+            color: red;
+        }
+
+        .green {
+            padding: 10px;
+            text-align: center;
+            color: green;
+        }
+
         tr:nth-child(even) {
             background-color: #f9f9f9;
         }
@@ -617,7 +629,7 @@
         <a href="/customers"><div class="line"><label class="lnr lnr-user"><font>Clients</font></label></div></a>
         <a href="/proveedor"><div class="line"><label class="lnr lnr-store"><font>Suppliers</font></label></div></a>
         <a href="/article"><div class="line"><label class="lnr lnr-cart"><font>Articles</font></label></div></a>
-        <a href=""><div class="line"><label class="lnr lnr-chart-bars"><font>Price</font></label></div></a>
+        <a href="/cotizacion"><div class="line"><label class="lnr lnr-chart-bars"><font>Price</font></label></div></a>
         <a href="/history"><div class="line"><label class="lnr lnr-book"><font>Historico</font></label></div></a>
         <a href="/closing"><div class="line"><label class="lnr lnr-printer"><font>Cierres</font></label></div></a>
     </div>
@@ -651,7 +663,13 @@
                             <td> {{ fila.5 }} </td>
                             <td> {{ fila.6 }} </td>
                             <td> {{ fila.7 }} </td>
-                            <td> {{ fila.8 }} </td>
+                            {% if fila.8 < 0  %}
+                                <td class="red"> {{ fila.8 }} </td>
+                            {% elif fila.8 > 0 %}
+                                <td class="green" >{{ fila.8 }}</td>
+                            {% else %}
+                                <td>{{ fila.8 }}</td>
+                            {% endif %}
                             <td> {{ fila.9 }} </td>
                             <td><a href="/detalle_c/{{ fila.0 }}"><button class="Buscar">ver</button></a></td>
                         </a>

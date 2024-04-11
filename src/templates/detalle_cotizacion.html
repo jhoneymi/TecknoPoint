@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Cotización</title>
+    <script src="https://kit.fontawesome.com/5ef1b31399.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        
+        .container {
+            width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            background-color: #fff;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+        
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        
+        .logo {
+            width: 150px;
+            height: auto;
+        }
+        
+        .print-icon {
+            width: 30px;
+            height: 30px;
+            font-size: 20px;
+            background-image: url('https://image.flaticon.com/icons/png/512/1629/1629301.png');
+            background-size: cover;
+            cursor: pointer;
+            top: 10px;
+            right: -90rem;
+            position: relative;
+        }
+        
+        .info-section {
+            margin-bottom: 20px;
+        }
+        
+        .info-section p {
+            margin: 5px 0;
+            font-size: 12px;
+        }
+        
+        .info-section h2 {
+            margin: 10px 0;
+            font-size: 16px;
+            color: #333;
+        }
+
+        .empresa {
+            margin-bottom: 40px;
+            margin-top: -20px;
+            margin-left: 50px;
+        }
+
+        .empresa p {
+            margin: 5px 0;
+            font-size: 9px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        
+        th, td {
+            border: 1px solid #ccc;
+            padding: 10px;
+            text-align: center;
+        }
+        
+        th {
+            background-color: #f2f2f2;
+        }
+        
+        tfoot th {
+            text-align: right;
+        }
+        
+        .note {
+            font-style: italic;
+            text-align: center;
+            margin-top: 20px;
+        }
+        
+        .title {
+            position: absolute;
+            top: 10px;
+            right: 65px;
+            font-size: 12px;
+        }
+
+        .date {
+            position: absolute;
+            top: 45px;
+            right: 20px;
+            font-size: 12px;
+        }
+
+        .duedate {
+            position: absolute;
+            top: 65px;
+            right: 20px;
+            font-size: 12px;
+        }
+
+        .back {
+            font-size: 20px;
+            position: relative;
+            top: 10px;
+            left: 10px;
+            color: rgb(0, 0, 0);
+            border: 1px solid transparent;
+            transition: all 300ms;
+            padding: 2px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <a class="back" href="/cotizacion"><i class="fa-solid fa-arrow-left"></i></a>
+    <a href="/descargar_cotizacion_pdf"><span class="print-icon"><i class="fa-solid fa-print"></i></span></a>
+    <div class="container">
+        {% for fila in bill %}
+        <h1 class="title">COTIZACIÓN N.{{ fila.2 }}</h1>
+        <div class="date"><strong>Fecha: </strong>{{ fila.1 }}</div>
+        {% endfor %}
+        <div class="duedate"><strong>Vence: </strong>{{ fecha }}</div>
+        <div class="header">
+            <img src="../static/img/image.png" alt="Logo de la empresa" class="logo">
+        </div>
+        <div class="info-section empresa">
+            <p><strong>Empresa:</strong> TecknoPoint</p>
+            <p><strong>RNC:</strong> 1-32-23615-7 <strong>Tel.:</strong> 849-282-5457</p>
+            <p><strong>Email:</strong> tecknopoint1@gmail.com</p>
+        </div>
+        <div class="info-section cliente">
+            {% for fila in bill %}
+            <p><strong>Cliente:</strong> {{ fila.3 }}</p>
+            <p><strong>RNC:</strong> {{ fila.8 }}</p>
+            <p><strong>Ubicación:</strong> {{ fila.9 }}</p>
+            <p><strong>Contacto:</strong> {{ fila.10 }}</p>
+            {% endfor %}
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Descripción</th>
+                    <th>Cantidad</th>
+                    <th>Precio Unit.</th>
+                    <th>Total</th>
+                    <th>ITBIS</th>
+                    <th>Total con ITBIS</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for fila_detalle in detail %}
+                <tr>
+                    <td>{{ fila_detalle.2 }}</td>
+                    <td>{{ fila_detalle.5 }}</td>
+                    <td>{{ fila_detalle.3 }}$</td>
+                    <td>{{ fila_detalle.5 * fila_detalle.3 }}$</td>
+                    <td>{{ fila_detalle.4 }}%</td>
+                    <td>{{ "{:.2f}".format(fila_detalle.5 * fila_detalle.3 + (fila_detalle.5 * fila_detalle.3 * fila_detalle.4 / 100)) }}$</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr>
+                    <th colspan="5">TOTAL:</th>
+                    <th>{{ total_general }}$</th>
+                </tr>
+            </tfoot>
+        </table>    
+    </div>
+</body>
+</html>
