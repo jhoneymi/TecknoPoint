@@ -175,6 +175,14 @@
             justify-content: center;
             height: 20px;
         }
+
+        .container__login-register form .logo {
+            width: 170px;
+            height: 170px;
+            margin-left: 25%;
+            margin-top: -60px;
+            margin-bottom: 10px;
+        }
     </style>
 </head>
 <body>
@@ -195,9 +203,8 @@
 
             <div class="container__login-register">
                 <form action="{{ url_for('login') }}" method="post" class="form__login">
-                    <h2>Login</h2>
+                    <img class="logo" src="../static/img/image.png" alt="logo">
                     <input type="text" name="username" placeholder="Username" required>
-                    <input type="text" name="email" placeholder="Email address" required>
                     <input type="password"  name="password" placeholder="Password" required>
                     <button type="submit">Iniciar sesión</button>
                 </form>

@@ -135,6 +135,45 @@
             cursor: pointer;
         }
 
+        .derecha {
+            position: relative;
+            float: right;
+            margin-right: 60px;
+            top: 150px;
+            clear: both;
+            border-top: 1px solid black;
+            padding-bottom: 5px;
+        }
+
+        .izquierda {
+            position: absolute;
+            float: left;
+            margin-left: 60px;
+            clear: both;
+            border-top: 1px solid black;
+            padding-bottom: 5px;
+        }
+
+        .nota {
+            margin-top: 60px;
+        }
+
+        .img {
+            width: 170px;
+            height: 170px;
+        }
+
+        .sello {
+            position: absolute;
+            left: 30px;
+            bottom: 90px;
+        }
+
+        .firma {
+            margin-left: 150px;
+            margin-bottom: -20px;
+        }
+
         .pagar .detalle {
             justify-content: center;
             align-items: center;
@@ -147,42 +186,39 @@
     </style>
 </head>
 <body>
-    <a class="back" href="/bills"><i class="fa-solid fa-arrow-left"></i></a>
-    <a href="/descargar_pdf"><span class="print-icon"><i class="fa-solid fa-print"></i></span></a>
-    <div class="container">
-        {% for fila in bill %}
+    {% for fila in bill %}
         <h1 class="title">FACTURA N.{{ fila.2 }}</h1>
         <div class="date"><strong>Fecha: </strong>{{ fila.1 }}</div>
-        {% endfor %}
-        <div class="duedate"><strong>Vence: </strong>{{ fecha }}</div>
-        <div class="header">
-            <img src="../static/img/image.png" alt="Logo de la empresa" class="logo">
-        </div>
-        <div class="info-section empresa">
-            <p><strong>Empresa:</strong> TecknoPoint</p>
-            <p><strong>RNC:</strong> 1-32-23615-7 <strong>Tel.:</strong> 849-282-5457</p>
-            <p><strong>Email:</strong> tecknopoint1@gmail.com</p>
-        </div>
-        <div class="info-section cliente">
-            {% for fila in bill %}
+    {% endfor %}
+    <div class="duedate"><strong>Vence: </strong>{{ fecha }}</div>
+    <div class="header">
+        <img src="../static/img/image.png" alt="Logo de la empresa" class="logo">
+    </div>
+    <div class="info-section empresa">
+        <p><strong>Empresa:</strong> TecknoPoint</p>
+        <p><strong>RNC:</strong> 1-32-23615-7 <strong>Tel.:</strong> 849-282-5457</p>
+        <p><strong>Email:</strong> tecknopoint1@gmail.com</p>
+    </div>
+    <div class="info-section cliente">
+        {% for fila in bill %}
             <p><strong>Cliente:</strong> {{ fila.3 }}</p>
             <p><strong>RNC:</strong> {{ fila.9 }}</p>
             <p><strong>Ubicación:</strong> {{ fila.10 }}</p>
             <p><strong>Contacto:</strong> {{ fila.11 }}</p>
-            {% endfor %}
-        </div>
-        <table>
-            <thead>
-                <tr>
-                    <th>Descripción</th>
-                    <th>Cantidad</th>
-                    <th>Precio Unit.</th>
-                    <th>ITBIS</th>
-                    <th>Subtotal Produc.</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for fila_detalle in detail %}
+        {% endfor %}
+    </div>
+    <table>
+        <thead>
+            <tr>
+                <th>Descripción</th>
+                <th>Cantidad</th>
+                <th>Precio Unit.</th>
+                <th>ITBIS</th>
+                <th>Subtotal Produc.</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for fila_detalle in detail %}
                 <tr>
                     <td>{{ fila_detalle.2 }}</td>
                     <td>{{ fila_detalle.5 }}</td>
@@ -190,48 +226,60 @@
                     <td>{{ fila_detalle.4 }}%</td>
                     <td>{{ fila_detalle.5 * fila_detalle.3 }}$</td>
                 </tr>
-                {% endfor %}
-            </tbody>
-            <tfoot>
-                <tr>
-                    <td class="sin" colspan="5"><hr></td>
-                </tr>
+            {% endfor %}
+        </tbody>
+        <tfoot>
+            <tr>
+                <td class="sin" colspan="5"><hr></td>
+            </tr>
 
-                <tr class="pagar">
-                    <td class="sin" colspan="3"></td>
-                    <th class="detalle">SubTotal</th>
-                    <td class="detalle">{{ subtotal }}$</td>
-                </tr>
+            <tr class="pagar">
+                <td class="sin" colspan="3"></td>
+                <th class="detalle">SubTotal</th>
+                <td class="detalle">{{ subtotal }}$</td>
+            </tr>
 
-                <tr class="pagar">
-                    <td class="sin" colspan="3"></td>
-                    <th class="detalle">Itbis</th>
-                    <td class="detalle">{{ total_itbis }}$</td>
-                </tr>
+            <tr class="pagar">
+                <td class="sin" colspan="3"></td>
+                <th class="detalle">Itbis</th>
+                <td class="detalle">{{ total_itbis }}$</td>
+            </tr>
 
+            {% for fila in bill %}
+                {% if fila.5 == "Efectivo" %}
+                    <tr class="pagar">
+                        <td class="sin" colspan="3"></td>
+                        <th class="detalle">Efectivo</th>
+                        <td class="detalle">{{ fila.6 }}</td>
+                    </tr>
+                    <tr class="pagar">
+                        <td class="sin" colspan="3"></td>
+                        <th class="detalle">Cambio</th>
+                        <td class="detalle">{{ fila.7 }}</td>
+                    </tr>
+                {% endif %}
+            {% endfor %}
 
-                {% for fila in bill %}
-                    {% if fila.5 == "Efectivo" %}
-                        <tr class="pagar">
-                            <td class="sin" colspan="3"></td>
-                            <th class="detalle">Efectivo</th>
-                            <td class="detalle">{{ fila.6 }}</td>
-                        </tr>
-                        <tr class="pagar">
-                            <td class="sin" colspan="3"></td>
-                            <th class="detalle">Cambio</th>
-                            <td class="detalle">{{ fila.7 }}</td>
-                        </tr>
-                    {% endif %}
-                {% endfor %}
+            <tr class="pagar">
+                <td class="sin" colspan="3"></td>
+                <th class="detalle">Total</th>
+                <td class="detalle">{{ total_general }}$</td>
+            </tr>
+        </tfoot>
+    </table>  
+    <img class="img sello" src="../static/img/features-2-removebg-preview.png" alt="sello"> 
+    <img class="img firma" src="../static/img/pagina_8-removebg-preview.png" alt="firma">
+    <p class="derecha">RECIBIDO POR:</p>
+    <p class="izquierda">REALIZADO POR:</p>
+    <h2 class="nota">Nota:</h2>    
+    <p>
+        Queríamos expresar nuestro agradecimiento por tu reciente visita a nuestra tienda de productos tecnológicos. Fue un placer atenderte y esperamos que hayas encontrado lo que buscabas.
 
-                <tr class="pagar">
-                    <td class="sin" colspan="3"></td>
-                    <th class="detalle">Total</th>
-                    <td class="detalle">{{ total_general }}$</td>
-                </tr>
-            </tfoot>
-        </table>    
-    </div>
+        Si necesitas alguna asistencia adicional con tus productos o tienes alguna pregunta, no dudes en ponerte en contacto con nosotros. Estamos aquí para ayudarte en cualquier momento.
+            
+        Esperamos verte nuevamente pronto.
+            
+        ¡Gracias por confiar en nosotros!
+    </p>
 </body>
 </html>

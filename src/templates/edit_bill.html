@@ -204,8 +204,8 @@
         margin: 10% auto;
         padding: 20px;
         border: 1px solid #888;
-        width: 80%;
-        max-width: 450px;
+        width: 90%;
+        max-width: 1500px;
         border-radius: 8px;
     }
 
@@ -305,101 +305,152 @@
         padding: 10px;
         font-size: 16px;
     }
+
+    /* Inputs */
+
+    .input-container {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        grid-template-rows: repeat(4, auto);
+        gap: 10px;
+    }
+
+    .input-container input[type="text"] {
+        width: 100%;
+        padding: 5px;
+        box-sizing: border-box;
+    }
+
+    /* Table */
+    table {
+            width: 100%;
+            margin: 20px auto;
+            border-collapse: collapse;
+            border: 1px solid #ddd;
+            background-color: #fff;
+            overflow-y: auto;
+            max-height: 200px;
+        }
+
+        th, td {
+            padding: 10px;
+            text-align: center;
+        }
+
+        .red {
+            padding: 10px;
+            text-align: center;
+            color: red;
+        }
+
+        th {
+            background-color: #f2f2f2;
+            border-bottom: 2px solid #ddd;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        tr:hover {
+            background-color: #f2f2f2;
+        }
+
 </style>
 
 <div id="loginModal-edit" class="modal">
     <div class="modal-content">
-      <a href="/inventario"><span id="close-edit" class="close">&times;</span></a>
-      <h2>Modify Article</h2>
-      <form id="updateForm" method="post" action="/update/{{ datos.0 }}" enctype="multipart/form-data">
-        <input type="text" id="art_name" name="art_name" placeholder="Nombre del artículo" value="{{ datos.1 }}">
-        <input type="number" step="any" id="art_precio" name="art_precio" placeholder="Precio del artículo" value="{{ datos.2 }}">
-        <select class="art_itbis" id="art_itbis" name="art_itbis">
-            <option value="{{ datos.3 }}">{{ datos.3 }}%</option>
-            <option value="18">Argentina (18%)</option>
-            <option value="19">Chile (19%)</option>
-            <option value="16">España (16%)</option>
-            <option value="18">México (16%)</option>
-            <option value="18">Panamá (7% - 10%)</option>
-            <option value="18">República Dominicana (18%)</option>
-            <option value="5">Canadá (5%)</option>
-            <option value="15">Brasil (15%)</option>
-            <option value="21">Francia (21%)</option>
-            <option value="22">Italia (22%)</option>
-            <option value="10">Australia (10%)</option>
-            <option value="20">Alemania (20%)</option>
-            <option value="16">Perú (16%)</option>
-            <option value="12">Colombia (12%)</option>
-            <option value="0">Estados Unidos (0%)</option>
-        </select>
-        <input type="number" step="any" id="art_cantidad" name="art_cantidad" placeholder="Ingrese la cantidad del artículo" value="{{ datos.4 }}">
-        <select id="categorias" name="catalogo">
-            <option value="{{ datos.6 }}">{{ datos.6 }}</option>
-            <optgroup label="Computadoras">
-              <option value="desktop">Computadoras de escritorio</option>
-              <option value="laptop">Laptops (Portátiles)</option>
-              <option value="mini-pc">Mini PC</option>
-            </optgroup>
-            <optgroup label="Componentes internos">
-              <option value="cpu">Procesadores (CPU)</option>
-              <option value="gpu">Tarjetas gráficas (GPU)</option>
-              <option value="motherboard">Placas base (Motherboards)</option>
-              <option value="ram">Memoria RAM</option>
-              <option value="storage">Almacenamiento (HDD, SSD, NVMe)</option>
-              <option value="power">Fuentes de alimentación (PSU)</option>
-              <option value="coling">Refrigeración (ventiladores, disipadores de calor, sistemas de refrigeración líquida)</option>
-            </optgroup>
-            <optgroup label="Periféricos">
-              <option value="monitor">Monitores</option>
-              <option value="keyboard">Teclados</option>
-              <option value="mouse">Ratones (Mouses)</option>
-              <option value="head_and_mic">Auriculares y micrófonos</option>
-              <option value="speakers">Altavoces</option>
-              <option value="Webcam">Cámaras web</option>
-              <option value="Printer">Impresoras y escáneres</option>
-            </optgroup>
-            <optgroup label="Accesorios">
-                <option value="laptop_sleeve">Fundas para laptops</option>
-                <option value="briefcase">Maletines y mochilas</option>
-                <option value="monitor_stand">Soportes para monitores</option>
-                <option value="ergonomic_mice">Ratones ergonómicos</option>
-                <option value="mechanical_keyboard">Teclados mecánicos</option>
-                <option value="mouse_pad">Alfombrillas para ratón</option>
-            </optgroup>
-            <optgroup label="Software">
-                <option value="operating_system">Sistemas operativos (Windows, macOS, Linux)</option>
-                <option value="office_suite">Suites de oficina (Microsoft Office, LibreOffice)</option>
-                <option value="antivirus">Antivirus y software de seguridad</option>
-                <option value="design_software">Software de diseño (Adobe Creative Suite, AutoCAD)</option>
-                <option value="video_and_audio_software">Software de edición de video y audio (Adobe Premiere, Audacity)</option>
-            </optgroup>
-            <optgroup label="Componentes de red">
-                <option value="router">Routers</option>
-                <option value="switche">Switches</option>
-                <option value="card_of_red">Tarjetas de red (Wi-Fi y Ethernet)</option>
-                <option value="network_adapter">Adaptadores de red (USB Wi-Fi, PLC)</option>
-            </optgroup>
-            <optgroup label="Dispositivos de almacenamiento externo">
-                <option value="usb">Unidades flash USB</option>
-                <option value="external_hard">Discos duros externos</option>
-                <option value="external_solid">Unidades de estado sólido externas</option>
-                <option value="SD">Tarjetas de memoria (SD, microSD)</option>
-            </optgroup>
-            <optgroup label="Componentes para gaming">
-                <option value="gaming_keyboard">Teclados gaming</option>
-                <option value="gaming_mice">Ratones gaming</option>
-                <option value="gaming_headphone">Auriculares gaming</option>
-                <option value="gaming_chair">Sillas gaming</option>
-                <option value="gaming_monitor">Monitores gaming</option>
-            </optgroup>
-        </select>
-        <input type="file" name="image" accept="image/*" value="{{ datos.7 }}">
+      <a href="/bills_adm"><span id="close-edit" class="close">&times;</span></a>
+      <h2>Modificar Factura</h2>
+      <form id="updateForm" method="post" action="/update_bill/{{ bill_data.0 }}" enctype="multipart/form-data">
+        <div class="input-container">
+            <label for=""><strong>Fecha:</strong></label>
+            <label for=""><strong>cliente:</strong></label>
+            <label for=""><strong>descuento:</strong></label>
+
+            <input type="text" id="date" name="date" value="{{ bill_data.1 }}">
+            <input type="text" id="customer" name="customer" value="{{ bill_data.3 }}">
+            <input type="text" id="discount" name="discount" value="{{ bill_data.4 }}">
+
+            <label for=""><strong>Methodo Pago:</strong></label>
+            <label for=""><strong>Monto:</strong></label>
+            <label for=""><strong>Cambio:</strong></label>
+            <input type="text" id="way_to_pay" name="way_to_pay" value="{{ bill_data.5 }}">
+            <input type="text" id="paid" name="paid" value="{{ bill_data.6 }}">
+            <input type="text" id="change" name="change" readonly value="{{ bill_data.7 }}">
+
+            <label for=""><strong>Cajero:</strong></label>
+            <label for=""><strong>RNC:</strong></label>
+            <label for=""><strong>Ubicación:</strong></label>
+            <input type="text" id="cashier" name="cashier" value="{{ bill_data.8 }}">
+            <input type="text" id="rnc_client" name="rnc_client" value="{{ bill_data.9 }}">
+            <input type="text" id="ubicacion" name="ubicacion" value="{{ bill_data.10 }}">
+
+            <label for=""><strong>Contacto:</strong></label>
+            <label for=""><strong>Total General:</strong></label>
+            <br>
+            <input type="text" id="contacto" name="contacto" value="{{ bill_data.11 }}">
+            <input type="text" id="total" name="total" readonly value="{{ bill_data.12 }}">
+            <br>
+        </div>
+
+        <!-- productos -->
+
+        <table>
+            <tr>
+                <th>Descripción</th>
+                <th>Precio</th>
+                <th>Itibis</th>
+                <th>Cantidad</th>
+            </tr>
+            {% for fila in article %}
+                <tr>
+                    <td><input name="description" id="description" value="{{ fila.2 }}" type="text"></td>
+                    <td><input name="price" id="price" class="precio" value="{{ fila.3 }}" type="number"></td>
+                    <td><input name="itbis" id="itbis" class="itibis" value="{{ fila.4 }}" type="number"></td>
+                    <td><input name="quantity" id="quantity" class="cantidad" value="{{ fila.5 }}" type="number"></td>
+                </tr>
+            {% endfor %}
+        </table>
+
         <button type="button" id="updatedButton">Updated</button>
       </form>
     </div>
 </div>
 
 <script>
+    function calcularTotal() {
+        let total = 0;
+        const filas = document.querySelectorAll('table tr:not(:first-child)'); // Excluimos la primera fila (encabezados)
+        
+        filas.forEach(fila => {
+            const precio = parseFloat(fila.querySelector('.precio').value) || 0;
+            const itibis = parseFloat(fila.querySelector('.itibis').value) || 0;
+            const cantidad = parseFloat(fila.querySelector('.cantidad').value) || 0;
+            sub_total = precio * cantidad
+            sub_itbis = sub_total + (sub_total * itibis / 100)
+            total += sub_itbis
+        });
+        
+        const totalInput = document.getElementById('total');
+        const totalAnterior = parseFloat(totalInput.value) || 0;
+        totalInput.value = total.toFixed(2);
+
+        const montoPagado = parseFloat(document.getElementById('paid').value) || 0;
+        const cambio = montoPagado - total;
+        document.getElementById('change').value = cambio.toFixed(2);
+    }
+
+    const inputs = document.querySelectorAll('input.precio, input.itibis, input.cantidad');
+    inputs.forEach(input => {
+        input.addEventListener('input', calcularTotal);
+    });
+    document.getElementById('paid').addEventListener('input', calcularTotal);
+
+    window.addEventListener('load', calcularTotal);
+
+
+
     document.getElementById('updatedButton').onclick = function() {
       Swal.fire({
         title: "¿Quieres guardar los cambios?",

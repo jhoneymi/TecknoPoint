@@ -134,6 +134,16 @@
             padding: 2px;
             cursor: pointer;
         }
+
+        .pagar .detalle {
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        .sin {
+            border: none;
+        }
     </style>
 </head>
 <body>
@@ -156,9 +166,9 @@
         <div class="info-section cliente">
             {% for fila in bill %}
             <p><strong>Cliente:</strong> {{ fila.3 }}</p>
-            <p><strong>RNC:</strong> {{ fila.8 }}</p>
-            <p><strong>Ubicación:</strong> {{ fila.9 }}</p>
-            <p><strong>Contacto:</strong> {{ fila.10 }}</p>
+            <p><strong>RNC:</strong> {{ fila.9 }}</p>
+            <p><strong>Ubicación:</strong> {{ fila.10 }}</p>
+            <p><strong>Contacto:</strong> {{ fila.11 }}</p>
             {% endfor %}
         </div>
         <table>
@@ -167,9 +177,8 @@
                     <th>Descripción</th>
                     <th>Cantidad</th>
                     <th>Precio Unit.</th>
-                    <th>Total</th>
                     <th>ITBIS</th>
-                    <th>Total con ITBIS</th>
+                    <th>Subtotal Produc.</th>
                 </tr>
             </thead>
             <tbody>
@@ -178,27 +187,51 @@
                     <td>{{ fila_detalle.2 }}</td>
                     <td>{{ fila_detalle.5 }}</td>
                     <td>{{ fila_detalle.3 }}$</td>
-                    <td>{{ fila_detalle.5 * fila_detalle.3 }}$</td>
                     <td>{{ fila_detalle.4 }}%</td>
-                    <td>{{ "{:.2f}".format(fila_detalle.5 * fila_detalle.3 + (fila_detalle.5 * fila_detalle.3 * fila_detalle.4 / 100)) }}$</td>
+                    <td>{{ fila_detalle.5 * fila_detalle.3 }}$</td>
                 </tr>
                 {% endfor %}
             </tbody>
             <tfoot>
                 <tr>
-                    <th colspan="5">TOTAL:</th>
-                    <th>{{ total_general }}$</th>
+                    <td class="sin" colspan="5"><hr></td>
+                </tr>
+
+                <tr class="pagar">
+                    <td class="sin" colspan="3"></td>
+                    <th class="detalle">SubTotal</th>
+                    <td class="detalle">{{ subtotal }}$</td>
+                </tr>
+
+                <tr class="pagar">
+                    <td class="sin" colspan="3"></td>
+                    <th class="detalle">Itbis</th>
+                    <td class="detalle">{{ total_itbis }}$</td>
+                </tr>
+
+
+                {% for fila in bill %}
+                    {% if fila.5 == "Efectivo" %}
+                        <tr class="pagar">
+                            <td class="sin" colspan="3"></td>
+                            <th class="detalle">Efectivo</th>
+                            <td class="detalle">{{ fila.6 }}</td>
+                        </tr>
+                        <tr class="pagar">
+                            <td class="sin" colspan="3"></td>
+                            <th class="detalle">Cambio</th>
+                            <td class="detalle">{{ fila.7 }}</td>
+                        </tr>
+                    {% endif %}
+                {% endfor %}
+
+                <tr class="pagar">
+                    <td class="sin" colspan="3"></td>
+                    <th class="detalle">Total</th>
+                    <td class="detalle">{{ total_general }}$</td>
                 </tr>
             </tfoot>
         </table>    
     </div>
-    <script>
-        function generatePDF() {
-            // Aquí puedes llamar a la función Python para generar el PDF
-            // Puedes usar AJAX para llamar a un script Python que genere el PDF o simplemente redirigir a una URL que ejecute el script
-            // Por ejemplo, puedes usar window.location.href para redirigir a una ruta en tu servidor que ejecute el script Python
-            window.location.href = "/generar_pdf";
-        }
-    </script>
 </body>
 </html>

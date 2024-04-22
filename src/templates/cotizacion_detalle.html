@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Factura</title>
+    <title>Cotización</title>
     <script src="https://kit.fontawesome.com/5ef1b31399.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
@@ -135,6 +135,45 @@
             cursor: pointer;
         }
 
+        .derecha {
+            position: relative;
+            float: right;
+            margin-right: 60px;
+            top: 150px;
+            clear: both;
+            border-top: 1px solid black;
+            padding-bottom: 5px;
+        }
+
+        .izquierda {
+            position: absolute;
+            float: left;
+            margin-left: 60px;
+            clear: both;
+            border-top: 1px solid black;
+            padding-bottom: 5px;
+        }
+
+        .nota {
+            margin-top: 60px;
+        }
+
+        .img {
+            width: 170px;
+            height: 170px;
+        }
+
+        .sello {
+            position: absolute;
+            left: 30px;
+            bottom: 90px;
+        }
+
+        .firma {
+            margin-left: 150px;
+            margin-bottom: -20px;
+        }
+
         .pagar .detalle {
             justify-content: center;
             align-items: center;
@@ -147,14 +186,11 @@
     </style>
 </head>
 <body>
-    <a class="back" href="/bills"><i class="fa-solid fa-arrow-left"></i></a>
-    <a href="/descargar_pdf"><span class="print-icon"><i class="fa-solid fa-print"></i></span></a>
-    <div class="container">
-        {% for fila in bill %}
-        <h1 class="title">FACTURA N.{{ fila.2 }}</h1>
+    {% for fila in bill %}
+        <h1 class="title">COTIZACIÓN N.{{ fila.2 }}</h1>
         <div class="date"><strong>Fecha: </strong>{{ fila.1 }}</div>
-        {% endfor %}
-        <div class="duedate"><strong>Vence: </strong>{{ fecha }}</div>
+    {% endfor %}
+    <div class="duedate"><strong>Vence: </strong>{{ fecha }}</div>
         <div class="header">
             <img src="../static/img/image.png" alt="Logo de la empresa" class="logo">
         </div>
@@ -183,13 +219,13 @@
             </thead>
             <tbody>
                 {% for fila_detalle in detail %}
-                <tr>
-                    <td>{{ fila_detalle.2 }}</td>
-                    <td>{{ fila_detalle.5 }}</td>
-                    <td>{{ fila_detalle.3 }}$</td>
-                    <td>{{ fila_detalle.4 }}%</td>
-                    <td>{{ fila_detalle.5 * fila_detalle.3 }}$</td>
-                </tr>
+                    <tr>
+                        <td>{{ fila_detalle.2 }}</td>
+                        <td>{{ fila_detalle.5 }}</td>
+                        <td>{{ fila_detalle.3 }}$</td>
+                        <td>{{ fila_detalle.4 }}%</td>
+                        <td>{{ fila_detalle.5 * fila_detalle.3 }}$</td>
+                    </tr>
                 {% endfor %}
             </tbody>
             <tfoot>

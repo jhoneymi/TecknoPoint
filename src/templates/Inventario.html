@@ -364,6 +364,20 @@
             font-size: 16px;
         }
 
+        select#art_itbis {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+            width: 100%;
+            margin-bottom: 15px;
+        }
+
+        select#art_itbis option {
+            padding: 10px;
+            font-size: 16px;
+        }
+
         /* Establecer un tamaño máximo en altura para el cuerpo de la tabla */
         #dataTable tbody {
             max-height: 300px; /* Ajusta este valor según sea necesario */
@@ -458,7 +472,24 @@
           <form id="Formulario" method="post" action="{{ url_for('add_article') }}" enctype="multipart/form-data">
             <input type="text" id="art_name" name="art_name" placeholder="Nombre del artículo" required>
             <input type="number" step="any" id="art_precio" name="art_precio" placeholder="Precio del artículo" required>
-            <input type="number" step="any" id="art_itbis" name="art_itbis" placeholder="Impuesto (%)" required>
+            <select class="art_itbis" id="art_itbis" name="art_itbis">
+                <option value="0">Selecciona un país:</option>
+                <option value="18">Argentina (18%)</option>
+                <option value="19">Chile (19%)</option>
+                <option value="16">España (16%)</option>
+                <option value="18">México (16%)</option>
+                <option value="18">Panamá (7% - 10%)</option>
+                <option value="18">República Dominicana (18%)</option>
+                <option value="5">Canadá (5%)</option>
+                <option value="15">Brasil (15%)</option>
+                <option value="21">Francia (21%)</option>
+                <option value="22">Italia (22%)</option>
+                <option value="10">Australia (10%)</option>
+                <option value="20">Alemania (20%)</option>
+                <option value="16">Perú (16%)</option>
+                <option value="12">Colombia (12%)</option>
+                <option value="0">Estados Unidos (0%)</option>
+            </select>
             <input type="number" step="any" id="art_cantidad" name="art_cantidad" placeholder="Ingrese la cantidad del artículo" required>
             <select id="categorias" name="catalogo">
                 <option value="">Seleccionar...</option>
@@ -519,8 +550,8 @@
                     <option value="gaming_chair">Sillas gaming</option>
                     <option value="gaming_monitor">Monitores gaming</option>
                 </optgroup>
-                <input type="file" name="image" accept="image/*" required>
             </select>
+            <input type="file" name="image" accept="image/*" required>
             <button type="button" id="agregar">Agregar</button>
           </form>
         </div>

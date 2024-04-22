@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify, make_response
 from flask_socketio import SocketIO, emit, namespace, Namespace
 from flask_mysqldb import MySQL
-from creditcard import CreditCard
+# from creditcard import CreditCard
 import bcrypt
 import datetime
 import os
@@ -95,6 +95,7 @@ def enviar(id):
         os.remove(pdf_output_path)
 
     id_factura = str(id)
+    session['id_factura_enviada'] = int(id_factura)
 
     # Renderiza el contenido HTML
     url = 'http://127.0.0.1:5000/factura_detalle/' + id_factura
@@ -144,6 +145,39 @@ def enviar_e():
         smtp.starttls()
         smtp.login(correo_remitente, contrasena_remitente)
         smtp.send_message(email)
+
+    # Send Customer
+
+    id_factura = session['id_factura_enviada']
+
+    cur = mysql.connection.cursor()
+    cur.execute("SELECT customer FROM bills WHERE id = %s", (id_factura,))
+    customer = cur.fetchone()
+
+    cur.execute("SELECT client_email FROM clients WHERE client_name = %s", (customer,))
+    email_client = cur.fetchone()[0] 
+
+    correo_remitente = "tecknopoint1@gmail.com"
+    contrasena_remitente = "mrvw gpsb whcr tjjx"
+    correo_destinatario = email_client
+    servidor_smtp = "smtp.gmail.com"
+    puerto_smtp = 587
+
+    email = EmailMessage()
+    email["From"] = correo_remitente
+    email["To"] = correo_destinatario
+    email["Subject"] = "Factura adjunta"
+    email.set_content("Adjunto encontrarás la factura")
+
+    with open(pdf_path, "rb") as attachment:
+        contenido_pdf = attachment.read()
+    email.add_attachment(contenido_pdf, maintype="application", subtype="octet-stream", filename=os.path.basename(pdf_path))
+
+    with smtplib.SMTP(servidor_smtp, puerto_smtp) as smtp:
+        smtp.starttls()
+        smtp.login(correo_remitente, contrasena_remitente)
+        smtp.send_message(email)
+
 
     return redirect(url_for('article'))
 
@@ -198,8 +232,8 @@ def cierre():
         saldoinicial = 1000
 
     for bill in bills:
-        total_bill = bill[11]
-        egresos_bill = bill[6]
+        total_bill = bill[12]
+        egresos_bill = bill[7]
 
         totalegresos += egresos_bill
         totalingresos += total_bill
@@ -290,6 +324,51 @@ def CIBC():
     return next_bill
 
 
+@app.route('/factura/<id>')
+def factura(id):
+    
+    session['id_factura'] = id
+
+    cur = mysql.connection.cursor()
+    cur.execute("SELECT * FROM bills WHERE id = %s",(id,))
+    bill = cur.fetchall()
+    cur.close()
+
+    cursor = mysql.connection.cursor()
+    cursor.execute("SELECT * FROM art_bill WHERE id_bills = %s",(id,))
+    detail = cursor.fetchall()
+    cursor.close()
+
+    total_general = 0
+    sub_total = 0
+    total_itbis = 0
+
+    for fila in detail:
+        art_price = fila[3]
+        art_itbis = fila[4]
+        art_mount = fila[5]
+
+        subtotal = art_mount * art_price
+        itbis = subtotal + ( subtotal * art_itbis / 100)
+        sub_itbis = subtotal * art_itbis / 100
+
+        # Calcular el total general sumando subtotal e ITBIS de cada producto
+        total_general += itbis
+        sub_total += art_mount * art_price
+        total_itbis += sub_itbis
+    
+    # Formatear los números total_general e itbis con dos decimales
+    total_general_formatted = "{:.2f}".format(total_general)
+    sub_total_formatted = "{:.2f}".format(sub_total)
+    total_itbis_formatted = "{:.2f}".format(total_itbis)
+    
+    for fila in bill:
+        fecha_N = fila[1]
+
+    fecha_V = fecha_N + timedelta(days=30)
+
+    return render_template("factura.html", bill=bill, detail=detail, total_itbis = total_itbis_formatted, subtotal = sub_total_formatted, total_general=total_general_formatted, fecha = fecha_V)
+
 #~ PDF
 @app.route('/descargar_pdf')
 def descargar_pdf():
@@ -297,7 +376,7 @@ def descargar_pdf():
     id_factura = session['id_factura']
 
     # URL del contenido a convertir en PDF
-    url = 'http://127.0.0.1:5000/factura_detalle/' + id_factura
+    url = 'http://127.0.0.1:5000/factura/' + id_factura
     
     # Genera el PDF desde la URL
     pdf = pdfkit.from_url(url, False, configuration=config)
@@ -328,7 +407,7 @@ def descargar_cotizacion_pdf():
     id_cotizacion = session['id_cotizacion']
 
     # URL del contenido a convertir en PDF
-    url = 'http://127.0.0.1:5000/detalle_cotizacion/' + id_cotizacion
+    url = 'http://127.0.0.1:5000/cotizacion_p/' + id_cotizacion
     
     # Genera el PDF desde la URL
     pdf = pdfkit.from_url(url, False, configuration=config)
@@ -385,7 +464,8 @@ def pay():
     total_general = str(total_sin_dolar)
 
     # Verificar si el número de tarjeta es válido o no
-    tarjeta = CreditCard(numero_tarjeta)
+    # tarjeta = CreditCard(numero_tarjeta)
+    tarjeta = numero_tarjeta
 
     new_id = CIB()
 
@@ -396,9 +476,9 @@ def pay():
         number_bill = GNF()
 
         cur = mysql.connection.cursor()
-        cur.execute("""INSERT INTO bills (id, date, number_bill, customer, discount, way_to_pay, `change`, cashier, rnc_client_bill, ubicacion, contacto, total_general, estado) 
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
-                        (new_id, fecha_hora_formateada, number_bill, customer, "0", "Tarjeta", "0", cajero, rnc, ubicacion, contacto, total_general, 1))
+        cur.execute("""INSERT INTO bills (id, date, number_bill, customer, discount, way_to_pay, paid,`change`, cashier, rnc_client_bill, ubicacion, contacto, total_general, estado) 
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
+                        (new_id, fecha_hora_formateada, number_bill, customer, "0", "Tarjeta", "0", "0", cajero, rnc, ubicacion, contacto, total_general, 1))
         mysql.connection.commit()
         APB(new_id)
 
@@ -537,9 +617,9 @@ def payment():
     number_bill = GNFE()
 
     cur = mysql.connection.cursor()
-    cur.execute("""INSERT INTO bills (id, date, number_bill, customer, discount, way_to_pay, `change`, cashier, rnc_client_bill, ubicacion, contacto, total_general, estado) 
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
-                    (new_id, fecha_hora_formateada, number_bill, customer, "0", "Efectivo", cambio, cajero, rnc, ubicacion, contacto, total_general, 1))
+    cur.execute("""INSERT INTO bills (id, date, number_bill, customer, discount, way_to_pay, paid, `change`, cashier, rnc_client_bill, ubicacion, contacto, total_general, estado) 
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
+                    (new_id, fecha_hora_formateada, number_bill, customer, "0", "Efectivo", monto_float, cambio, cajero, rnc, ubicacion, contacto, total_general, 1))
     mysql.connection.commit()
     APBE(new_id)
 
@@ -720,7 +800,7 @@ def history():
 
         for fila in historys:
 
-            total += fila[11]
+            total += fila[12]
 
         return render_template('history.html', history = historys, total = total)
     else:
@@ -728,7 +808,7 @@ def history():
 
 def obtener_historys():
     cur = mysql.connection.cursor()
-    cur.execute("SELECT * FROM bills WHERE estado = %s",("2"))
+    cur.execute("SELECT * FROM bills WHERE estado = %s ORDER BY date DESC, id DESC ",("2"))
     data = cur.fetchall()
     cur.close()
 
@@ -739,43 +819,45 @@ def filtro():
     if request.method == 'POST':
         fecha_inicio = request.form.get('fecha_inicio')
         fecha_fin = request.form.get('fecha_fin')
+        if fecha_inicio is None and fecha_fin is None:
+            selecion = request.form['seleccion']
+            fecha_inicio = 0
+            fecha_fin = 0
 
-    if fecha_inicio is None and fecha_fin is None:
-        selecion = request.form.get('selecion')
-
-        if selecion == "diario":
-            # Obtener el rango de fechas para el día actual
-            fecha_inicio = datetime.now().strftime("%d-%m-%Y")
-            fecha_fin = (datetime.now() + timedelta(days=1)).strftime("%d-%m-%Y")
-        elif selecion == "semanal":
-            # Obtener el rango de fechas para la semana actual
-            fecha_actual = datetime.now()
-            fecha_sem = fecha_actual - timedelta(days=fecha_actual.weekday())
-            fecha_inicio = fecha_sem.strftime("%d-%m-%Y")
-            fecha_fin = (fecha_sem + timedelta(days=6)).strftime("%d-%m-%Y")
-        elif selecion == "trimestral":
-            # Obtener el rango de fechas para el trimestre actual
-            fecha_inicio = datetime.now()
-            trimestre_actual = (fecha_inicio.month - 1) // 3 + 1
-            fecha_trimestre = datetime(fecha_inicio.year, 3 * trimestre_actual - 2, 1)
-            fecha_inicio = fecha_trimestre.strftime("%d-%m-%Y")
-            fecha_fin = fecha_inicio  # Fin del trimestre es el mismo que el inicio
-        elif selecion == "anual":
-            # Obtener el rango de fechas para el año actual
-            fecha_inicio = datetime.now().strftime("01-01-%Y")
-            fecha_fin = datetime.now().strftime("31-12-%Y")
-        elif selecion == "mensual":
-            # Obtener el rango de fechas para el mes actual
-            fecha_inicio = datetime.now().replace(day=1).strftime("%d-%m-%Y")
-            fecha_fin = (datetime.now().replace(day=1) + timedelta(days=31)).strftime("%d-%m-%Y")         
+            if selecion == "diario":
+                # Obtener el rango de fechas para el día actual
+                fecha_inicio = datetime.now().strftime("%d-%m-%Y")
+                fecha_fin = (datetime.now() + timedelta(days=1)).strftime("%d-%m-%Y")
+            elif selecion == "semanal":
+                # Obtener el rango de fechas para la semana actual
+                fecha_actual = datetime.now()
+                fecha_sem = fecha_actual - timedelta(days=fecha_actual.weekday())
+                fecha_inicio = fecha_sem.strftime("%d-%m-%Y")
+                fecha_fin = (fecha_sem + timedelta(days=6)).strftime("%d-%m-%Y")
+            elif selecion == "trimestral":
+                # Obtener el rango de fechas para el trimestre actual
+                fecha_inicio = datetime.now()
+                trimestre_actual = (fecha_inicio.month - 1) // 3 + 1
+                fecha_trimestre = datetime(fecha_inicio.year, 3 * trimestre_actual - 2, 1)
+                fecha_inicio = fecha_trimestre.strftime("%d-%m-%Y")
+                fecha_fin = fecha_inicio  # Fin del trimestre es el mismo que el inicio
+            elif selecion == "anual":
+                # Obtener el rango de fechas para el año actual
+                fecha_inicio = datetime.now().strftime("01-01-%Y")
+                fecha_fin = datetime.now().strftime("31-12-%Y")
+            elif selecion == "mensual":
+                # Obtener el rango de fechas para el mes actual
+                fecha_inicio = datetime.now().replace(day=1).strftime("%d-%m-%Y")
+                fecha_fin = (datetime.now().replace(day=1) + timedelta(days=31)).strftime("%d-%m-%Y")         
     else:
-        None
+        fecha_inicio = None
+        fecha_fin = None
 
-        filtro = obtener_filtro_history(fecha_inicio, fecha_fin)
+    filtro = obtener_filtro_history(fecha_inicio, fecha_fin)
         
-        total = sum(fila[11] for fila in filtro)
+    total = sum(fila[12] for fila in filtro)
 
-        return render_template('filtrar.html', history=filtro, total=total)
+    return render_template('filtrar.html', history=filtro, total=total)
 
 def obtener_filtro_history(fecha_inicio, fecha_fin):
     cur = mysql.connection.cursor()
@@ -785,6 +867,118 @@ def obtener_filtro_history(fecha_inicio, fecha_fin):
 
     return data
 
+#^ Edit Bill
+@app.route('/edit_bill/<id>')
+def edit_bill(id):
+    cur = mysql.connection.cursor()
+    cur.execute('SELECT * FROM bills WHERE id = %s',(id))
+    bill_data = cur.fetchone()
+
+    cursor = mysql.connection.cursor()
+    cursor.execute('SELECT * FROM art_bill WHERE id_bills = %s',(id))
+    art_bill = cursor.fetchall()
+
+    return render_template('edit_bill.html', bill_data=bill_data, article = art_bill)
+
+@app.route('/update_bill/<id>', methods = ['POST', 'GET'])
+def update_bill(id):
+
+    if request.method == 'POST':
+
+        fecha = request.form['date']
+        cliente = request.form['customer']
+        descuento = request.form['discount']
+        methodo_pago = request.form['way_to_pay']
+        monto = request.form['paid']
+        cambio = request.form['change']
+        cajero = request.form['cashier']
+        rnc = request.form['rnc_client']
+        ubicacion = request.form['ubicacion']
+        contacto = request.form['contacto']
+        total_general = request.form['total']
+
+        cur = mysql.connection.cursor()
+        cur.execute("UPDATE bills SET date = %s, customer = %s, discount = %s, way_to_pay = %s, paid = %s, `change` = %s, cashier = %s, rnc_client_bill = %s, ubicacion = %s, contacto = %s, total_general = %s WHERE id = %s",
+                    (fecha, cliente, descuento, methodo_pago, monto, cambio, cajero, rnc, ubicacion, contacto, total_general, id))
+        
+        for idx, fila in enumerate(request.form.getlist('description')):
+            descripcion = request.form.getlist('description')[idx]
+            precio = request.form.getlist('price')[idx]
+            itbis = request.form.getlist('itbis')[idx]
+            cantidad = request.form.getlist('quantity')[idx]
+
+            cur.execute("""UPDATE art_bill SET decrition = %s, price = %s, itbis = %s, amount = %s WHERE id_bills = %s AND decrition = %s""",
+                        (descripcion, precio, itbis, cantidad, id, descripcion))
+        
+        mysql.connection.commit()
+        cur.close()
+        return redirect(url_for('bill_adm'))
+    
+    return redirect(url_for('admin'))
+
+#* Bills Admin
+@app.route('/bills_adm', methods=['GET','POST'])
+def bill_adm():
+    if session['logged in'] == True:
+        bills = obtener_bills_adm()
+        return render_template('bills_adm.html', bills = bills)
+    else:
+        return redirect(url_for('login'))
+
+
+@app.route('/bills_table_adm')
+def obtener_bills_adm():
+    cur = mysql.connection.cursor()
+    cur.execute("SELECT * FROM bills WHERE estado = %s",("1"))
+    data = cur.fetchall()
+    cur.close()
+
+    return data
+
+@app.route('/factura_detalle_adm/<id>')
+def factura_detalle_adm(id):
+
+    session['id_factura'] = id
+
+    cur = mysql.connection.cursor()
+    cur.execute("SELECT * FROM bills WHERE id = %s",(id,))
+    bill = cur.fetchall()
+    cur.close()
+
+    cursor = mysql.connection.cursor()
+    cursor.execute("SELECT * FROM art_bill WHERE id_bills = %s",(id,))
+    detail = cursor.fetchall()
+    cursor.close()
+
+    total_general = 0
+    sub_total = 0
+    total_itbis = 0
+
+    for fila in detail:
+        art_price = fila[3]
+        art_itbis = fila[4]
+        art_mount = fila[5]
+
+        subtotal = art_mount * art_price
+        itbis = subtotal + ( subtotal * art_itbis / 100)
+        sub_itbis = subtotal * art_itbis / 100
+
+        # Calcular el total general sumando subtotal e ITBIS de cada producto
+        total_general += itbis
+        sub_total += art_mount * art_price
+        total_itbis += sub_itbis
+    
+    # Formatear los números total_general e itbis con dos decimales
+    total_general_formatted = "{:.2f}".format(total_general)
+    sub_total_formatted = "{:.2f}".format(sub_total)
+    total_itbis_formatted = "{:.2f}".format(total_itbis)
+    
+    for fila in bill:
+        fecha_N = fila[1]
+
+    fecha_V = fecha_N + timedelta(days=30)
+
+    return render_template("detalle_adm.html", bill=bill, detail=detail, total_itbis = total_itbis_formatted, subtotal = sub_total_formatted, total_general=total_general_formatted, fecha = fecha_V)
 
 #* Bills
 @app.route('/bills', methods=['GET','POST'])
@@ -821,6 +1015,8 @@ def factura_detalle(id):
     cursor.close()
 
     total_general = 0
+    sub_total = 0
+    total_itbis = 0
 
     for fila in detail:
         art_price = fila[3]
@@ -829,19 +1025,24 @@ def factura_detalle(id):
 
         subtotal = art_mount * art_price
         itbis = subtotal + ( subtotal * art_itbis / 100)
+        sub_itbis = subtotal * art_itbis / 100
 
         # Calcular el total general sumando subtotal e ITBIS de cada producto
         total_general += itbis
+        sub_total += art_mount * art_price
+        total_itbis += sub_itbis
     
     # Formatear los números total_general e itbis con dos decimales
     total_general_formatted = "{:.2f}".format(total_general)
+    sub_total_formatted = "{:.2f}".format(sub_total)
+    total_itbis_formatted = "{:.2f}".format(total_itbis)
     
     for fila in bill:
         fecha_N = fila[1]
 
     fecha_V = fecha_N + timedelta(days=30)
 
-    return render_template("detalle.html", bill=bill, detail=detail, total_general=total_general_formatted, fecha = fecha_V)
+    return render_template("detalle.html", bill=bill, detail=detail, total_itbis = total_itbis_formatted, subtotal = sub_total_formatted, total_general=total_general_formatted, fecha = fecha_V)
 
 #TODO Customers
 @app.route('/customers', methods = ['GET', 'DELETE'])
@@ -1238,18 +1439,16 @@ def login():
 
     if request.method == 'POST':
         username = request.form['username']
-        email = request.form['email']
         password = request.form['password']
 
         cur = mysql.connection.cursor()
-        cur.execute("SELECT * FROM users WHERE email = %s AND username = %s", (email, username))
+        cur.execute("SELECT * FROM users WHERE username = %s", (username,))
         user = cur.fetchone()
 
         if user:
 
             # Successful login, store information in the session
             session['id'] = user[0]
-            session['email'] = email
             session['username'] = username
             session['fullname'] = user[1]
             flash('Successful login', 'success')
@@ -1291,7 +1490,7 @@ def login():
                 
                 elif session['role_id'] == 2:
                     cur = mysql.connection.cursor()
-                    cur.execute('SELECT * FROM time WHERE id_users = %s',(session_id))
+                    cur.execute('SELECT * FROM time WHERE id_users = %s',(session_id,))
                     duplicate = cur.fetchall()
 
                     if duplicate:
@@ -1303,6 +1502,7 @@ def login():
                         cur.execute('INSERT INTO time (id, id_users, entry_date) VALUES (%s, %s, %s)',(session_id, session_id, fecha_hora_formateada))
                         mysql.connection.commit()
                     # # Enviar correo electronico cuando se logue e usuario
+                    
                     # correo_remitente = "tecknopoint1@gmail.com"
                     # contrasena_remitente = "mrvw gpsb whcr tjjx"
                     # servidor_smtp = "smtp.gmail.com"
@@ -1517,6 +1717,8 @@ def detalle_cotizacion(id):
     cursor.close()
 
     total_general = 0
+    sub_total = 0
+    total_itbis = 0
 
     for fila in detail:
         art_price = fila[3]
@@ -1525,19 +1727,24 @@ def detalle_cotizacion(id):
 
         subtotal = art_mount * art_price
         itbis = subtotal + ( subtotal * art_itbis / 100)
+        sub_itbis = subtotal * art_itbis / 100
 
         # Calcular el total general sumando subtotal e ITBIS de cada producto
         total_general += itbis
+        sub_total += art_mount * art_price
+        total_itbis += sub_itbis
     
     # Formatear los números total_general e itbis con dos decimales
     total_general_formatted = "{:.2f}".format(total_general)
+    sub_total_formatted = "{:.2f}".format(sub_total)
+    total_itbis_formatted = "{:.2f}".format(total_itbis)
     
     for fila in bill:
         fecha_N = fila[1]
 
     fecha_V = fecha_N + timedelta(days=30)
 
-    return render_template("detalle_cotizacion.html", bill=bill, detail=detail, total_general=total_general_formatted, fecha = fecha_V)
+    return render_template("detalle_cotizacion.html", bill=bill, detail=detail, total_itbis = total_itbis_formatted, subtotal = sub_total_formatted, total_general=total_general_formatted, fecha = fecha_V)
 
 
 #? Cotizacion_emp
@@ -1571,6 +1778,8 @@ def cotizacion_detalle_emp(id):
     cursor.close()
 
     total_general = 0
+    sub_total = 0
+    total_itbis = 0
 
     for fila in detail:
         art_price = fila[3]
@@ -1579,19 +1788,66 @@ def cotizacion_detalle_emp(id):
 
         subtotal = art_mount * art_price
         itbis = subtotal + ( subtotal * art_itbis / 100)
+        sub_itbis = subtotal * art_itbis / 100
 
         # Calcular el total general sumando subtotal e ITBIS de cada producto
         total_general += itbis
+        sub_total += art_mount * art_price
+        total_itbis += sub_itbis
     
     # Formatear los números total_general e itbis con dos decimales
     total_general_formatted = "{:.2f}".format(total_general)
+    sub_total_formatted = "{:.2f}".format(sub_total)
+    total_itbis_formatted = "{:.2f}".format(total_itbis)
     
     for fila in bill:
         fecha_N = fila[1]
 
     fecha_V = fecha_N + timedelta(days=30)
 
-    return render_template("detalle_cotizacion_emp.html", bill=bill, detail=detail, total_general=total_general_formatted, fecha = fecha_V)
+    return render_template("detalle_cotizacion_emp.html",bill=bill, detail=detail, total_itbis = total_itbis_formatted, subtotal = sub_total_formatted, total_general=total_general_formatted, fecha = fecha_V)
+
+@app.route('/cotizacion_p/<id>')
+def cotizacion_p(id):
+    cur = mysql.connection.cursor()
+    cur.execute("SELECT * FROM bills WHERE id = %s",(id,))
+    bill = cur.fetchall()
+    cur.close()
+
+    cursor = mysql.connection.cursor()
+    cursor.execute("SELECT * FROM art_bill WHERE id_bills = %s",(id,))
+    detail = cursor.fetchall()
+    cursor.close()
+
+    total_general = 0
+    sub_total = 0
+    total_itbis = 0
+
+    for fila in detail:
+        art_price = fila[3]
+        art_itbis = fila[4]
+        art_mount = fila[5]
+
+        subtotal = art_mount * art_price
+        itbis = subtotal + ( subtotal * art_itbis / 100)
+        sub_itbis = subtotal * art_itbis / 100
+
+        # Calcular el total general sumando subtotal e ITBIS de cada producto
+        total_general += itbis
+        sub_total += art_mount * art_price
+        total_itbis += sub_itbis
+    
+    # Formatear los números total_general e itbis con dos decimales
+    total_general_formatted = "{:.2f}".format(total_general)
+    sub_total_formatted = "{:.2f}".format(sub_total)
+    total_itbis_formatted = "{:.2f}".format(total_itbis)
+    
+    for fila in bill:
+        fecha_N = fila[1]
+
+    fecha_V = fecha_N + timedelta(days=30)
+
+    return render_template("cotizacion_detalle.html", bill=bill, detail=detail, total_itbis = total_itbis_formatted, subtotal = sub_total_formatted, total_general=total_general_formatted, fecha = fecha_V)
 
 
 #! Empleados
@@ -1632,6 +1888,8 @@ def factura_detalle_emp(id):
     cursor.close()
 
     total_general = 0
+    sub_total = 0
+    total_itbis = 0
 
     for fila in detail:
         art_price = fila[3]
@@ -1640,19 +1898,24 @@ def factura_detalle_emp(id):
 
         subtotal = art_mount * art_price
         itbis = subtotal + ( subtotal * art_itbis / 100)
+        sub_itbis = subtotal * art_itbis / 100
 
         # Calcular el total general sumando subtotal e ITBIS de cada producto
         total_general += itbis
+        sub_total += art_mount * art_price
+        total_itbis += sub_itbis
     
     # Formatear los números total_general e itbis con dos decimales
     total_general_formatted = "{:.2f}".format(total_general)
+    sub_total_formatted = "{:.2f}".format(sub_total)
+    total_itbis_formatted = "{:.2f}".format(total_itbis)
     
     for fila in bill:
         fecha_N = fila[1]
 
     fecha_V = fecha_N + timedelta(days=30)
 
-    return render_template("detalle_emp.html", bill=bill, detail=detail, total_general=total_general_formatted, fecha = fecha_V)
+    return render_template("detalle_emp.html", bill=bill, detail=detail, total_itbis = total_itbis_formatted, subtotal = sub_total_formatted, total_general=total_general_formatted, fecha = fecha_V)
 
 @app.route('/article_emp')
 def article_emp():
@@ -1779,7 +2042,7 @@ def pay_emp():
     total_general = str(total_sin_dolar)
 
     # Verificar si el número de tarjeta es válido o no
-    tarjeta = CreditCard(numero_tarjeta)
+    tarjeta = numero_tarjeta
 
     new_id = CIB()
 
@@ -1790,9 +2053,9 @@ def pay_emp():
         number_bill = GNF()
 
         cur = mysql.connection.cursor()
-        cur.execute("""INSERT INTO bills (id, date, number_bill, customer, discount, way_to_pay, `change`, cashier, rnc_client_bill, ubicacion, contacto, total_general, estado) 
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
-                        (new_id, fecha_hora_formateada, number_bill, customer, "0", "Tarjeta", "0", cajero, rnc, ubicacion, contacto, total_general, 1))
+        cur.execute("""INSERT INTO bills (id, date, number_bill, customer, discount, way_to_pay, paid, `change`, cashier, rnc_client_bill, ubicacion, contacto, total_general, estado) 
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
+                        (new_id, fecha_hora_formateada, number_bill, customer, "0", "Tarjeta", "0", "0", cajero, rnc, ubicacion, contacto, total_general, 1))
         mysql.connection.commit()
         APB(new_id)
 
@@ -1850,9 +2113,9 @@ def payment_emp():
     number_bill = GNFE()
 
     cur = mysql.connection.cursor()
-    cur.execute("""INSERT INTO bills (id, date, number_bill, customer, discount, way_to_pay, `change`, cashier, rnc_client_bill, ubicacion, contacto, total_general, estado) 
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
-                    (new_id, fecha_hora_formateada, number_bill, customer, "0", "Efectivo", cambio, cajero, rnc, ubicacion, contacto, total_general, 1))
+    cur.execute("""INSERT INTO bills (id, date, number_bill, customer, discount, way_to_pay, paid, `change`, cashier, rnc_client_bill, ubicacion, contacto, total_general, estado) 
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
+                    (new_id, fecha_hora_formateada, number_bill, customer, "0", "Efectivo", monto_float, cambio, cajero, rnc, ubicacion, contacto, total_general, 1))
     mysql.connection.commit()
     APBE(new_id)
 
@@ -1968,8 +2231,8 @@ def cierre_emp():
         saldoinicial = 1000
 
     for bill in bills:
-        total_bill = bill[11]
-        egresos_bill = bill[6]
+        total_bill = bill[12]
+        egresos_bill = bill[7]
 
         totalegresos += egresos_bill
         totalingresos += total_bill
