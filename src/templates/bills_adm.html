@@ -615,6 +615,22 @@
             background-color: rgb(60, 60, 226);
         }
 
+        .delete {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 40px;
+            height: 40px;
+            background-color: rgb(245, 77, 71);
+            border-radius: 75%;
+            margin-top: -2.4rem;
+            margin-left: 11rem;
+        }
+
+        .delete:hover {
+            background-color: rgb(226, 60, 60);
+        }
+
 
     </style>
 </head>
@@ -629,7 +645,6 @@
         <a href="/admin"><div class="line"><label class="lnr lnr-home"><font>Home</font></label></div></a>
         <a href="/bills_adm"><div class="line"><label class="lnr lnr-file-empty"><font>Bills</font></label></div></a>
         <a href="/cotizacion_adm"><div class="line"><label class="lnr lnr-chart-bars"><font>Price</font></label></div></a>
-        <a href="/history_adm"><div class="line"><label class="lnr lnr-book"><font>Historico</font></label></div></a>
         <a href="/closing_adm"><div class="line"><label class="lnr lnr-printer"><font>Cierres</font></label></div></a>
     </div>
 
@@ -651,6 +666,7 @@
                                 </ul>
                             </a>
                             <a href="/edit_bill/{{ fila.0 }}"><button class="edit"><i class="fa-solid fa-pen"></i></button></a>
+                            <a href="/delete_bill/{{ fila.0 }}"><button class="delete"><i class="fa-solid fa-trash"></i></button></a>
                         </div>
                     {% endfor %}
                 {% else %}

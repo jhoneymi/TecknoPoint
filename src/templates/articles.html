@@ -739,6 +739,12 @@
                 <label for="cvv">CVV:</label>
                 <input type="text" name="cvv" id="cvv" placeholder="CVV">
 
+                <label for="discount">Descuento (%):</label>
+                <input type="number" name="discount" id="discount" placeholder="Descuento">
+
+                <label for="extra_itbis">ITBIS Extra (%):</label>
+                <input type="number" name="ex-itbis" id="ex-itbis" placeholder="Itbis Extra">
+
                 <label for="total">Total:</label>
                 {% for fila in calculo %}
                     <input type="text" value="Total: {{ fila.total }}$" id="total" name="total" readonly>
@@ -752,6 +758,7 @@
                             <option value="{{ fila.0 }}">{{ fila.1 }}</option>
                         {% endfor %}
                     </optgroup>
+                    <button>Agregar Cliente</button>
                 </select>
     
                 <label for="cajero">Cajero:</label>
@@ -779,6 +786,12 @@
                 <label for="">Cambio:</label>
                 <input type="text" value="" id="cambio" name="cambio" readonly>
 
+                <label for="discount">Descuento (%):</label>
+                <input type="number" name="discount" id="discount" placeholder="Descuento" max="100">
+
+                <label for="extra_itbis">ITBIS Extra (%):</label>
+                <input type="number" name="ex-itbis" id="ex-itbis" placeholder="Itbis Extra" max="100">
+
                 <label for="">Cliente: </label>
                 <select name="cliente" id="cliente" required>
                     <option value="">Seleccionar Customer</option>
@@ -787,6 +800,7 @@
                             <option value="{{ fila.0 }}">{{ fila.1 }}</option>
                         {% endfor %}
                     </optgroup>
+                    <button>Agregar Cliente</button>
                 </select>
 
                 <label for="">Cajero:</label>
@@ -811,6 +825,37 @@
     <script src="{{ url_for('static', filename='js/script6.js') }}"></script>
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script>
+
+        function updateTotal() {
+            var discount = parseFloat(document.getElementById('discount').value) || 0;
+            var itbisExtra = parseFloat(document.getElementById('ex-itbis').value) || 0;
+            var total = parseFloat('{{ calculo[0].total }}'); // Obtener el valor total de la primera fila
+
+            // Validar que los valores estén en el rango de 0 a 100
+            if (discount < 0) {
+                discount = 0;
+            } else if (discount > 100) {
+                discount = 100;
+            }
+
+            if (itbisExtra < 0) {
+                itbisExtra = 0;
+            } else if (itbisExtra > 100) {
+                itbisExtra = 100;
+            }
+
+            total -= total * (discount / 100);
+            total += total * (itbisExtra / 100);
+
+            document.getElementById('total').value = 'Total: ' + total.toFixed(2) + '$';
+        }
+
+        // Event listeners para los campos relevantes
+        document.getElementById('discount').addEventListener('input', updateTotal);
+        document.getElementById('ex-itbis').addEventListener('input', updateTotal);
+
+
+        //----------------------------------- MODAL's ZONE -----------------------------------
 
         var modal_enviar = document.getElementById('loginModal-enviar');
         var btn_enviar = document.getElementById("enviar");

@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify, make_response
 from flask_socketio import SocketIO, emit, namespace, Namespace
 from flask_mysqldb import MySQL
+
 # from creditcard import CreditCard
 import bcrypt
 import datetime
@@ -184,7 +185,7 @@ def enviar_e():
 #^ Cierre de Caja
 @app.route('/closing')
 def closing():
-    if session['logged in'] == True:
+    if session['logged in'] == True and session['role_id'] == 2:
         closes = obtener_closing()
         return render_template('closing.html', close = closes)
     else:
@@ -199,9 +200,8 @@ def obtener_closing():
 
 @app.route('/cierre', methods = ['POST','GET'])
 def cierre():
-
     id_C = CIBC()
-    
+        
     fullname = session['fullname']
 
     cur = mysql.connection.cursor()
@@ -247,19 +247,19 @@ def cierre():
         else:
             flash("Hubo un error")
 
-    saldo_final = saldoinicial + totalingresos - totalegresos
-    
-    arqueocaja = saldo_final - saldoinicial
-            
-    
-    cur.execute("INSERT INTO closing_box (id_closing, fechahora, saldoinicial, totalingresos, totalegresos, totalventasefectivo, totalventastarjeta, totaldevoluciones, arqueocaja, observaciones, cajero) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
-                (id_C, fechahora, saldoinicial, totalingresos, totalegresos, totalefectivo, totaltarjeta, totaldevoluciones, arqueocaja, observaciones, cajero))
-    mysql.connection.commit()
-    cur.close
+        saldo_final = saldoinicial + totalingresos - totalegresos
+        
+        arqueocaja = saldo_final - saldoinicial
+                
+        
+        cur.execute("INSERT INTO closing_box (id_closing, fechahora, saldoinicial, totalingresos, totalegresos, totalventasefectivo, totalventastarjeta, totaldevoluciones, arqueocaja, observaciones, cajero) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
+                    (id_C, fechahora, saldoinicial, totalingresos, totalegresos, totalefectivo, totaltarjeta, totaldevoluciones, arqueocaja, observaciones, cajero))
+        mysql.connection.commit()
+        cur.close
 
-    cur.execute("UPDATE bills SET estado = %s",('2'))
-    mysql.connection.commit()
-    cur.close()
+        cur.execute("UPDATE bills SET estado = %s",('2'))
+        mysql.connection.commit()
+        cur.close()
 
     return redirect(url_for('bill'))
 
@@ -441,6 +441,8 @@ def pay():
     nombre_titular = request.form['nombre_titular']
     fecha_vencimiento = request.form['fecha_vencimiento']
     cvv = request.form['cvv']
+    discount = request.form['discount']
+    ex_itbis = request.form['ex-itbis']
     cliente = request.form['cliente']
     cajero = request.form['cajero']
     total = request.form['total']
@@ -476,9 +478,9 @@ def pay():
         number_bill = GNF()
 
         cur = mysql.connection.cursor()
-        cur.execute("""INSERT INTO bills (id, date, number_bill, customer, discount, way_to_pay, paid,`change`, cashier, rnc_client_bill, ubicacion, contacto, total_general, estado) 
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
-                        (new_id, fecha_hora_formateada, number_bill, customer, "0", "Tarjeta", "0", "0", cajero, rnc, ubicacion, contacto, total_general, 1))
+        cur.execute("""INSERT INTO bills (id, date, number_bill, customer, discount, way_to_pay, paid,`change`, cashier, rnc_client_bill, ubicacion, contacto, total_general, estado, Itbisextra) 
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
+                        (new_id, fecha_hora_formateada, number_bill, customer, discount, "Tarjeta", "0", "0", cajero, rnc, ubicacion, contacto, total_general, 1, ex_itbis))
         mysql.connection.commit()
         APB(new_id)
 
@@ -585,6 +587,8 @@ def payment():
     cajero = request.form['cajero']
     monto = request.form['monto']
     total = request.form['total']
+    discount = request.form['discount']
+    ex_itbis = request.form['ex-itbis']
 
     # Obtener los datos del cliente
     cursor = mysql.connection.cursor()
@@ -617,9 +621,9 @@ def payment():
     number_bill = GNFE()
 
     cur = mysql.connection.cursor()
-    cur.execute("""INSERT INTO bills (id, date, number_bill, customer, discount, way_to_pay, paid, `change`, cashier, rnc_client_bill, ubicacion, contacto, total_general, estado) 
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
-                    (new_id, fecha_hora_formateada, number_bill, customer, "0", "Efectivo", monto_float, cambio, cajero, rnc, ubicacion, contacto, total_general, 1))
+    cur.execute("""INSERT INTO bills (id, date, number_bill, customer, discount, way_to_pay, paid, `change`, cashier, rnc_client_bill, ubicacion, contacto, total_general, estado, Itbisextra) 
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
+                    (new_id, fecha_hora_formateada, number_bill, customer, discount, "Efectivo", monto_float, cambio, cajero, rnc, ubicacion, contacto, total_general, 1, ex_itbis))
     mysql.connection.commit()
     APBE(new_id)
 
@@ -760,7 +764,7 @@ def help():
 #?  Inicio
 @app.route('/inicio', methods = ['GET', 'POST'])
 def inicio():
-    if session['logged in'] == True:
+    if session['logged in'] == True and session['role_id'] == 2:
         customer = obtener_customer()
         INCT = inactive()
         return render_template('inicio.html', INCT = INCT, CUST = customer)
@@ -770,7 +774,7 @@ def inicio():
 #*  Admin
 @app.route('/admin', methods = ['GET','POST'])
 def  admin():
-    if session['logged in'] == True:
+    if session['logged in'] == True and session['role_id'] == 1:
         users = obtener_Users()
         time = obtener_tiempo()
         return render_template('admin.html', time = time, users = users)
@@ -867,6 +871,20 @@ def obtener_filtro_history(fecha_inicio, fecha_fin):
 
     return data
 
+#! Delete Bill
+@app.route('/delete_bill/<id>')
+def delete_bill(id):
+    cursor = mysql.connection.cursor()
+    cursor.execute("DELETE FROM art_bill WHERE id_bills = %s",(id,))
+    mysql.connection.commit()
+
+    cur = mysql.connection.cursor()
+    cur.execute("DELETE FROM bills WHERE id = %s",(id,))
+    mysql.connection.commit()
+    cur.close()
+
+    return redirect(url_for('bill_adm'))
+
 #^ Edit Bill
 @app.route('/edit_bill/<id>')
 def edit_bill(id):
@@ -896,10 +914,11 @@ def update_bill(id):
         ubicacion = request.form['ubicacion']
         contacto = request.form['contacto']
         total_general = request.form['total']
+        ex_itbis = request.form['ex_itbis']
 
         cur = mysql.connection.cursor()
-        cur.execute("UPDATE bills SET date = %s, customer = %s, discount = %s, way_to_pay = %s, paid = %s, `change` = %s, cashier = %s, rnc_client_bill = %s, ubicacion = %s, contacto = %s, total_general = %s WHERE id = %s",
-                    (fecha, cliente, descuento, methodo_pago, monto, cambio, cajero, rnc, ubicacion, contacto, total_general, id))
+        cur.execute("UPDATE bills SET date = %s, customer = %s, discount = %s, way_to_pay = %s, paid = %s, `change` = %s, cashier = %s, rnc_client_bill = %s, ubicacion = %s, contacto = %s, total_general = %s, Itbisextra = %s WHERE id = %s",
+                    (fecha, cliente, descuento, methodo_pago, monto, cambio, cajero, rnc, ubicacion, contacto, total_general, ex_itbis, id))
         
         for idx, fila in enumerate(request.form.getlist('description')):
             descripcion = request.form.getlist('description')[idx]
@@ -919,7 +938,7 @@ def update_bill(id):
 #* Bills Admin
 @app.route('/bills_adm', methods=['GET','POST'])
 def bill_adm():
-    if session['logged in'] == True:
+    if session['logged in'] == True and session['role_id'] == 1:
         bills = obtener_bills_adm()
         return render_template('bills_adm.html', bills = bills)
     else:
@@ -953,6 +972,8 @@ def factura_detalle_adm(id):
     total_general = 0
     sub_total = 0
     total_itbis = 0
+    total_discount = 0
+    total_ex_itbis = 0
 
     for fila in detail:
         art_price = fila[3]
@@ -967,9 +988,19 @@ def factura_detalle_adm(id):
         total_general += itbis
         sub_total += art_mount * art_price
         total_itbis += sub_itbis
+
+    for fila1 in bill:
+        discount = fila1[4]
+        ex_itbis = fila1[14]
+
+        total_discount += subtotal * discount / 100
+        total_ex_itbis += sub_total * ex_itbis / 100
     
+    total_general_discount = total_general - total_discount
+    total_general_ex_itbis = total_general_discount + total_ex_itbis
+
     # Formatear los números total_general e itbis con dos decimales
-    total_general_formatted = "{:.2f}".format(total_general)
+    total_general_formatted = "{:.2f}".format(total_general_ex_itbis)
     sub_total_formatted = "{:.2f}".format(sub_total)
     total_itbis_formatted = "{:.2f}".format(total_itbis)
     
@@ -983,7 +1014,7 @@ def factura_detalle_adm(id):
 #* Bills
 @app.route('/bills', methods=['GET','POST'])
 def bill():
-    if session['logged in'] == True:
+    if session['logged in'] == True and session['role_id'] == 2:
         bills = obtener_bills()
         return render_template('bills.html', bills = bills)
     else:
@@ -1017,6 +1048,8 @@ def factura_detalle(id):
     total_general = 0
     sub_total = 0
     total_itbis = 0
+    total_discount = 0
+    total_ex_itbis = 0
 
     for fila in detail:
         art_price = fila[3]
@@ -1031,9 +1064,20 @@ def factura_detalle(id):
         total_general += itbis
         sub_total += art_mount * art_price
         total_itbis += sub_itbis
+
+        for fila1 in bill:
+
+            discount = fila1[4]
+            ex_itbis = fila1[14]
+
+            total_discount += subtotal * discount / 100
+            total_ex_itbis += sub_total * ex_itbis / 100
+        
+    total_general_discount = total_general - total_discount
+    total_general_ex_itbis = total_general_discount + total_ex_itbis
     
     # Formatear los números total_general e itbis con dos decimales
-    total_general_formatted = "{:.2f}".format(total_general)
+    total_general_formatted = "{:.2f}".format(total_general_ex_itbis)
     sub_total_formatted = "{:.2f}".format(sub_total)
     total_itbis_formatted = "{:.2f}".format(total_itbis)
     
@@ -1047,7 +1091,7 @@ def factura_detalle(id):
 #TODO Customers
 @app.route('/customers', methods = ['GET', 'DELETE'])
 def customer():
-    if session['logged in'] == True:
+    if session['logged in'] == True and session['role_id'] == 2:
         clientes = obtener_customer()
         INCT = inactive()
         return render_template('customers.html', INCT = INCT, clientes=clientes)
@@ -1137,7 +1181,7 @@ def search_customers_inactive():
 #* Articles
 @app.route('/article')
 def article():
-    if session['logged in'] == True:
+    if session['logged in'] == True and session['role_id'] == 2:
         datos = obtener_datos_inv()
         articles = obtener_articles()
         customer = obtener_customer()
@@ -1334,7 +1378,7 @@ def remove_article(id):
 #!  Inventario
 @app.route('/inventario', methods = ['GET', 'DELETE'])
 def inventario():
-    if session['logged in'] == True:
+    if session['logged in'] == True and session['role_id'] == 2:
         datos = obtener_datos_inv()
         return render_template('inventario.html', datos=datos)
     else:
@@ -1615,7 +1659,7 @@ def logout():
 #?  Proveedores
 @app.route('/proveedor', methods = ['GET', 'DELETE'])
 def proveedor():
-    if session['logged in'] == True:
+    if session['logged in'] == True and session['role_id'] == 2:
         prov = obtener_datos_prov()
         return render_template('proveedores.html', prov=prov)
     else:
@@ -1686,11 +1730,90 @@ def search_suppliers():
     cur.close()
     return jsonify([{'id': result[0], 'name': result[1], 'address': result[2], 'phone': result[3], 'email': result[4]} for result in results])
 
+#& Cotizacion Admin
+@app.route('/cotizacion_adm')
+def cotizacion_adm():
+    if session['logged in'] == True and session['role_id'] == 1:
+        cotiz = obtener_adm_cotizacion()
+        return render_template('cotizacion_adm.html', cotiz = cotiz)
+    else:
+        return redirect(url_for('login'))
+
+@app.route('/cotizacion_adm_table')
+def obtener_adm_cotizacion():
+    cur = mysql.connection.cursor()
+    cur.execute("SELECT * FROM bills WHERE estado = %s",("1"))
+    data = cur.fetchall()
+    cur.close()
+
+    return data
+
+@app.route('/detalle_cotizacion_adm/<id>')
+def detalle_cotizacion_adm(id):
+
+    session['id_cotizacion'] = id
+
+    cur = mysql.connection.cursor()
+    cur.execute("SELECT * FROM bills WHERE id = %s",(id,))
+    bill = cur.fetchall()
+    cur.close()
+
+    cursor = mysql.connection.cursor()
+    cursor.execute("SELECT * FROM art_bill WHERE id_bills = %s",(id,))
+    detail = cursor.fetchall()
+    cursor.close()
+
+    total_general = 0
+    sub_total = 0
+    total_itbis = 0
+    total_discount = 0
+    total_ex_itbis = 0
+
+    for fila in detail:
+        art_price = fila[3]
+        art_itbis = fila[4]
+        art_mount = fila[5]
+
+        subtotal = art_mount * art_price
+        itbis = subtotal + ( subtotal * art_itbis / 100)
+        sub_itbis = subtotal * art_itbis / 100
+
+        # Calcular el total general sumando subtotal e ITBIS de cada producto
+        total_general += itbis
+        sub_total += art_mount * art_price
+        total_itbis += sub_itbis
+
+        for fila1 in bill:
+            discount = fila1[4]
+            ex_itbis = fila1[14]
+
+            total_discount += subtotal * discount / 100
+            total_ex_itbis += sub_total * ex_itbis / 100
+    
+    total_general_discount = total_general - total_discount
+    total_general_ex_itbis = total_general_discount + total_ex_itbis
+    
+    # Formatear los números total_general e itbis con dos decimales
+    total_general_formatted = "{:.2f}".format(total_general_ex_itbis)
+    sub_total_formatted = "{:.2f}".format(sub_total)
+    total_itbis_formatted = "{:.2f}".format(total_itbis)
+    
+    for fila in bill:
+        fecha_N = fila[1]
+
+    fecha_V = fecha_N + timedelta(days=30)
+
+    return render_template("detalle_cotizacion_adm.html", bill=bill, detail=detail, total_itbis = total_itbis_formatted, subtotal = sub_total_formatted, total_general=total_general_formatted, fecha = fecha_V)
+
+
 #* Cotizacion
 @app.route('/cotizacion')
 def cotizacion():
-    cotiz = obtener_cotizacion()
-    return render_template('cotizacion.html', cotiz = cotiz)
+    if session['logged in'] == True and session['role_id'] == 2:
+        cotiz = obtener_cotizacion()
+        return render_template('cotizacion.html', cotiz = cotiz)
+    else:
+        return redirect(url_for('login'))
 
 @app.route('/cotizacion_table')
 def obtener_cotizacion():
@@ -1719,6 +1842,8 @@ def detalle_cotizacion(id):
     total_general = 0
     sub_total = 0
     total_itbis = 0
+    total_discount = 0
+    total_ex_itbis = 0
 
     for fila in detail:
         art_price = fila[3]
@@ -1734,8 +1859,18 @@ def detalle_cotizacion(id):
         sub_total += art_mount * art_price
         total_itbis += sub_itbis
     
+        for fila1 in bill:
+            discount = fila1[4]
+            ex_itbis = fila1[14]
+
+            total_discount += subtotal * discount / 100
+            total_ex_itbis += sub_total * ex_itbis / 100
+        
+    total_general_discount = total_general - total_discount
+    total_general_ex_itbis = total_general_discount + total_ex_itbis
+
     # Formatear los números total_general e itbis con dos decimales
-    total_general_formatted = "{:.2f}".format(total_general)
+    total_general_formatted = "{:.2f}".format(total_general_ex_itbis)
     sub_total_formatted = "{:.2f}".format(sub_total)
     total_itbis_formatted = "{:.2f}".format(total_itbis)
     
@@ -1751,8 +1886,11 @@ def detalle_cotizacion(id):
 
 @app.route('/cotizacion_emp')
 def cotiz_emp():
-    cotiz = obtener_cotizacion_emp()
-    return render_template('cotizacion_emp.html', cotiz = cotiz)
+    if session['logged in'] == True and session['role_id'] == 3:
+        cotiz = obtener_cotizacion_emp()
+        return render_template('cotizacion_emp.html', cotiz = cotiz)
+    else:
+        return redirect(url_for('login'))
 
 @app.route('/cotizacion_table')
 def obtener_cotizacion_emp():
@@ -1780,6 +1918,8 @@ def cotizacion_detalle_emp(id):
     total_general = 0
     sub_total = 0
     total_itbis = 0
+    total_discount = 0
+    total_ex_itbis = 0
 
     for fila in detail:
         art_price = fila[3]
@@ -1794,9 +1934,19 @@ def cotizacion_detalle_emp(id):
         total_general += itbis
         sub_total += art_mount * art_price
         total_itbis += sub_itbis
+
+        for fila1 in bill:
+            discount = fila1[4]
+            ex_itbis = fila1[14]
+
+            total_discount += subtotal * discount / 100
+            total_ex_itbis += sub_total * ex_itbis / 100
+    
+    total_general_discount = total_general - total_discount
+    total_general_ex_itbis = total_general_discount + total_ex_itbis
     
     # Formatear los números total_general e itbis con dos decimales
-    total_general_formatted = "{:.2f}".format(total_general)
+    total_general_formatted = "{:.2f}".format(total_general_ex_itbis)
     sub_total_formatted = "{:.2f}".format(sub_total)
     total_itbis_formatted = "{:.2f}".format(total_itbis)
     
@@ -1854,7 +2004,7 @@ def cotizacion_p(id):
 
 @app.route('/inicio_emp')
 def inicio_emp():
-    if session['logged in'] == True:
+    if session['logged in'] == True and session['role_id'] == 3:
         return render_template('/inicio_emp.html')
     else:
         return redirect(url_for('login'))
@@ -1890,6 +2040,8 @@ def factura_detalle_emp(id):
     total_general = 0
     sub_total = 0
     total_itbis = 0
+    total_discount = 0
+    total_ex_itbis = 0
 
     for fila in detail:
         art_price = fila[3]
@@ -1905,8 +2057,18 @@ def factura_detalle_emp(id):
         sub_total += art_mount * art_price
         total_itbis += sub_itbis
     
+        for fila1 in bill:
+            discount = fila1[4]
+            ex_itbis = fila1[14]
+
+            total_discount += subtotal * discount / 100
+            total_ex_itbis += sub_total * ex_itbis / 100
+
+    total_general_discount = total_general - total_discount
+    total_general_ex_itbis = total_general_discount + total_ex_itbis
+
     # Formatear los números total_general e itbis con dos decimales
-    total_general_formatted = "{:.2f}".format(total_general)
+    total_general_formatted = "{:.2f}".format(total_general_ex_itbis)
     sub_total_formatted = "{:.2f}".format(sub_total)
     total_itbis_formatted = "{:.2f}".format(total_itbis)
     
@@ -1919,7 +2081,7 @@ def factura_detalle_emp(id):
 
 @app.route('/article_emp')
 def article_emp():
-    if session['logged in'] == True:
+    if session['logged in'] == True and session['role_id'] == 2:
         datos = obtener_datos_inv()
         articles = obtener_articles_emp()
         customer = obtener_customer()
@@ -2022,6 +2184,8 @@ def pay_emp():
     cliente = request.form['cliente']
     cajero = request.form['cajero']
     total = request.form['total']
+    discount = request.form['discount']
+    ex_itbis = request.form['ex-itbis']
 
     # Obtener los datos del cliente
     cursor = mysql.connection.cursor()
@@ -2053,9 +2217,9 @@ def pay_emp():
         number_bill = GNF()
 
         cur = mysql.connection.cursor()
-        cur.execute("""INSERT INTO bills (id, date, number_bill, customer, discount, way_to_pay, paid, `change`, cashier, rnc_client_bill, ubicacion, contacto, total_general, estado) 
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
-                        (new_id, fecha_hora_formateada, number_bill, customer, "0", "Tarjeta", "0", "0", cajero, rnc, ubicacion, contacto, total_general, 1))
+        cur.execute("""INSERT INTO bills (id, date, number_bill, customer, discount, way_to_pay, paid, `change`, cashier, rnc_client_bill, ubicacion, contacto, total_general, estado, Itbisextra) 
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
+                        (new_id, fecha_hora_formateada, number_bill, customer, discount, "Tarjeta", "0", "0", cajero, rnc, ubicacion, contacto, total_general, 1, ex_itbis))
         mysql.connection.commit()
         APB(new_id)
 
@@ -2081,6 +2245,9 @@ def payment_emp():
     cajero = request.form['cajero']
     monto = request.form['monto']
     total = request.form['total']
+    discount = request.form['discount']
+    ex_itbis = request.form['ex-itbis']
+    
 
     # Obtener los datos del cliente
     cursor = mysql.connection.cursor()
@@ -2113,9 +2280,9 @@ def payment_emp():
     number_bill = GNFE()
 
     cur = mysql.connection.cursor()
-    cur.execute("""INSERT INTO bills (id, date, number_bill, customer, discount, way_to_pay, paid, `change`, cashier, rnc_client_bill, ubicacion, contacto, total_general, estado) 
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
-                    (new_id, fecha_hora_formateada, number_bill, customer, "0", "Efectivo", monto_float, cambio, cajero, rnc, ubicacion, contacto, total_general, 1))
+    cur.execute("""INSERT INTO bills (id, date, number_bill, customer, discount, way_to_pay, paid, `change`, cashier, rnc_client_bill, ubicacion, contacto, total_general, estado, Itbisextra) 
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
+                    (new_id, fecha_hora_formateada, number_bill, customer, discount, "Efectivo", monto_float, cambio, cajero, rnc, ubicacion, contacto, total_general, 1, ex_itbis))
     mysql.connection.commit()
     APBE(new_id)
 
@@ -2247,10 +2414,10 @@ def cierre_emp():
             flash("Hubo un error")
 
     saldo_final = saldoinicial + totalingresos - totalegresos
-    
+        
     arqueocaja = saldo_final - saldoinicial
-            
-    
+                
+        
     cur.execute("INSERT INTO closing_box (id_closing, fechahora, saldoinicial, totalingresos, totalegresos, totalventasefectivo, totalventastarjeta, totaldevoluciones, arqueocaja, observaciones, cajero) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
                 (id_C, fechahora, saldoinicial, totalingresos, totalegresos, totalefectivo, totaltarjeta, totaldevoluciones, arqueocaja, observaciones, cajero))
     mysql.connection.commit()
@@ -2266,7 +2433,7 @@ def cierre_emp():
 
 @app.route('/empleados', methods = ['GET', 'DELETE'])
 def empleados():
-    if session['logged in'] == True:
+    if session['logged in'] == True and session['role_id'] == 2:
         empleados = obtener_datos_emp()
         return render_template('/empleados.html', empleados=empleados)
     else:

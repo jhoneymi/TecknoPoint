@@ -89,7 +89,7 @@
         }
         
         th {
-            background-color: #f2f2f2;
+            background-color: #bebebe;
         }
         
         tfoot th {
@@ -224,6 +224,27 @@
                         </tr>
                     {% endif %}
                 {% endfor %}
+
+                {% for fila in bill %}
+                    {% if fila.4 != 0 %}
+                        <tr class="pagar">
+                            <td class="sin" colspan="3"></td>
+                            <th class="detalle">Descuento</th>
+                            <td class="detalle">{{ fila.4 }}%</td>
+                        </tr>
+                    {% endif %}
+                {% endfor %}
+
+                {% for fila in bill %}
+                    {% if fila.14 != 0 %}
+                        <tr class="pagar">
+                            <td class="sin" colspan="3"></td>
+                            <th class="detalle">ITBIS - Extra</th>
+                            <td class="detalle">{{ fila.14 }}%</td>
+                        </tr>
+                    {% endif %}
+                {% endfor %}
+
 
                 <tr class="pagar">
                     <td class="sin" colspan="3"></td>

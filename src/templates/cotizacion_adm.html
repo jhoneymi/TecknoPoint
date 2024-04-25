@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Closing</title>
+    <title>Cotizacion</title>
     <link rel="icon" href="../static/img/image.png">
     <link rel="stylesheet" href="https://cdn.linearicons.com/free/1.0.0/icon-font.min.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
@@ -113,18 +113,6 @@
         th {
             background-color: #f2f2f2;
             border-bottom: 2px solid #ddd;
-        }
-
-        .red {
-            padding: 10px;
-            text-align: center;
-            color: red;
-        }
-
-        .green {
-            padding: 10px;
-            text-align: center;
-            color: green;
         }
 
         tr:nth-child(even) {
@@ -256,6 +244,11 @@
             left: 70px;
             padding: 20px;
             transition: all 300ms;
+        }
+
+        article {
+            display: flex;
+            flex-wrap: wrap;
         }
 
         .main-move {
@@ -607,82 +600,76 @@
             color: rgba(51, 51, 51, 0.7); /* Color del texto con opacidad */
         }
 
+        .edit {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 40px;
+            height: 40px;
+            background-color: rgb(77, 77, 247);
+            border-radius: 75%;
+            margin-left: 14.5rem;
+            margin-top: -1.4rem;
+        }
 
+        .edit:hover {
+            background-color: rgb(60, 60, 226);
+        }
+
+        .delete {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 40px;
+            height: 40px;
+            background-color: rgb(245, 77, 71);
+            border-radius: 75%;
+            margin-top: -2.5rem;
+            margin-left: 11.5rem;
+        }
+
+        .delete:hover {
+            background-color: rgb(226, 60, 60);
+        }
     </style>
 </head>
 <body onload="preloader()">
-
-    <div class="loader-container">
-        <div class="loader"></div>
-    </div>
-
     <header>
         <label class="lnr lnr-menu"></label>
         <a class="logout" href="/logout"><i class="fa-solid fa-right-from-bracket"></i></a>
     </header>
 
     <div class="menu">
-        <a href="/inicio"><div class="line"><label class="lnr lnr-home"><font>Home</font></label></div></a>
-        <a href="/inventario"><div class="line"><label class="lnr lnr-briefcase"><font>Inventory</font></label></div></a>
-        <a href="/empleados"><div class="line"><label class="lnr lnr-users"><font>Employees</font></label></div></a>
-        <a href="/bills"><div class="line"><label class="lnr lnr-file-empty"><font>Bills</font></label></div></a>
-        <a href="/customers"><div class="line"><label class="lnr lnr-user"><font>Clients</font></label></div></a>
-        <a href="/proveedor"><div class="line"><label class="lnr lnr-store"><font>Suppliers</font></label></div></a>
-        <a href="/article"><div class="line"><label class="lnr lnr-cart"><font>Articles</font></label></div></a>
-        <a href="/cotizacion"><div class="line"><label class="lnr lnr-chart-bars"><font>Price</font></label></div></a>
-        <a href="/history"><div class="line"><label class="lnr lnr-book"><font>Historico</font></label></div></a>
-        <a href="/closing"><div class="line"><label class="lnr lnr-printer"><font>Cierres</font></label></div></a>
+        <a href="/admin"><div class="line"><label class="lnr lnr-home"><font>Home</font></label></div></a>
+        <a href="/bills_adm"><div class="line"><label class="lnr lnr-file-empty"><font>Bills</font></label></div></a>
+        <a href="/cotizacion_adm"><div class="line"><label class="lnr lnr-chart-bars"><font>Price</font></label></div></a>
+        <a href="/closing_adm"><div class="line"><label class="lnr lnr-printer"><font>Cierres</font></label></div></a>
     </div>
 
     <main>
         <article>
-            <h1>Cierres de Caja</h1>
             <table>
-                    <tr>
-                        <th>cajero</th>
-                        <th>fecha de cierre de caja</th>
-                        <th>saldo inicial</th>
-                        <th>total ingresos</th>
-                        <th>total egresos</th>
-                        <th>total ventas efectivo</th>
-                        <th>total ventas tarjeta</th>
-                        <th>total devoluciones</th>
-                        <th>arqueo caja</th>
-                        <th>obsercaciones</th>
-                        <th></th>
-                    </tr>
-                {% if close %}
-                    {% for fila in close %}
-                    <tr>
-                        <a href="{{ fila.0 }}">
-                            <td> {{ fila.10 }} </td>
-                            <td> {{ fila.1 }} </td>
-                            <td> {{ fila.2 }} </td>
-                            <td> {{ fila.3 }} </td>
-                            <td> {{ fila.4 }} </td>
-                            <td> {{ fila.5 }} </td>
-                            <td> {{ fila.6 }} </td>
-                            <td> {{ fila.7 }} </td>
-                            {% if fila.8 < 0  %}
-                                <td class="red"> {{ fila.8 }} </td>
-                            {% elif fila.8 > 0 %}
-                                <td class="green" >{{ fila.8 }}</td>
-                            {% else %}
-                                <td>{{ fila.8 }}</td>
-                            {% endif %}
-                            <td> {{ fila.9 }} </td>
-                            <td><a href="/detalle_c/{{ fila.0 }}"><button class="Buscar">ver</button></a></td>
-                        </a>
-                    </tr>
+                {% if cotiz %}
+                    {% for fila in cotiz %}
+                        <div class="mi-div">
+                            <a class="mi-a" href="/detalle_cotizacion/{{ fila.0 }}">
+                                <h5>Cotización N. {{ fila.2 }}</h5>
+                                <ul>
+                                    <li> <strong>date:</strong> {{ fila.1 }}</li>
+                                    <li> <strong>customer:</strong> {{ fila.3 }}</li>
+                                    <li> <strong>cashier:</strong> {{ fila.7 }}</li>
+                                    <li><strong>methodo pago:</strong> {{ fila.5 }}</li>
+                                    <li> <strong>total:</strong> {{ fila.11 }} $</li>
+                                </ul>
+                            </a>
+                            <a href="/edit_coti/{{ fila.0 }}"><button class="edit"><i class="fa-solid fa-pen"></i></button></a>
+                            <a href="/delete_coti/{{ fila.0 }}"><button class="delete"><i class="fa-solid fa-trash"></i></button></a>
+                        </div>
                     {% endfor %}
                 {% else %}
-                    <tr>
-                        <td colspan="11">
-                            <div class="div">
-                                <p>No hay cierres de caja hechos</p>
-                            </div>
-                        </td>
-                    </tr>
+                    <div class="div">
+                        <p>No hay cotizaciones realizadas</p>
+                    </div>
                 {% endif %}
             </table>
         </article>
@@ -697,6 +684,20 @@
             $('main').toggleClass("main-move")
         });
 
+        document.getElementById('agregar').onclick = function() {
+            event.preventDefault();
+
+            Swal.fire({
+                position: "top-end",
+                icon: "success",
+                title: "Se realizo el cierre de caja con exito",
+                showConfirmButton: false,
+                timer: 1500
+            }).then(() => {
+                document.getElementById('Formulario').submit();
+            });
+        }
+
         window.addEventListener('load', function() {
             // Obtén el contenedor de la página de carga
             var loaderContainer = document.querySelector('.loader-container');
@@ -706,6 +707,24 @@
             var mainContent = document.getElementById('mainContent');
             mainContent.classList.remove('hidden');
         });
+
+        var modal = document.getElementById('Observacion-from');
+        var btn = document.getElementById("cierre");
+        var span = document.getElementsByClassName("close")[0];
+      
+        btn.onclick = function() {
+          modal.style.display = "block";
+        }
+      
+        span.onclick = function() {
+          modal.style.display = "none";
+        }
+      
+        window.onclick = function(event) {
+          if (event.target == modal) {
+            modal.style.display = "none";
+          }
+        }
     </script>
 </body>
 </html>

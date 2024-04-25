@@ -528,7 +528,6 @@
                     <th>Itbis</th>
                     <th>Cantidad</th>
                     <th>Catalogo</th>
-                    <th>Operation</th>
                 </tr>
                 {% if articles %}
                     {% for fila in articles %}
@@ -542,7 +541,6 @@
                                 <a href="/quitar_cantidad_art_emp/{{ fila.0 }}"><button id="remove" class="Quitar">-</button></a>
                             </td>
                             <td>{{ fila.5 }}</td>
-                            <td><a href="/remove_article_emp/{{ fila.0 }}"><button class="Quitar"><i class="fa-solid fa-trash-can"></i></i></button></a></td>
                         </tr>
                     {% endfor %}
                 {% else %}
@@ -654,6 +652,12 @@
                 {% for fila in calculo %}
                     <input type="text" value="Total: {{ fila.total }}$" id="total" name="total" readonly>
                 {% endfor %}
+
+                <label for="discount">Descuento (%):</label>
+                <input type="number" name="discount" id="discount" placeholder="Descuento" max="100">
+
+                <label for="extra_itbis">ITBIS Extra (%):</label>
+                <input type="number" name="ex-itbis" id="ex-itbis" placeholder="Itbis Extra" max="100">
     
                 <label for="cliente">Cliente:</label>
                 <select name="cliente" id="cliente" required>
@@ -689,6 +693,12 @@
 
                 <label for="">Cambio:</label>
                 <input type="text" value="" id="cambio" name="cambio" readonly>
+
+                <label for="discount">Descuento (%):</label>
+                <input type="number" name="discount" id="discount" placeholder="Descuento" max="100">
+
+                <label for="extra_itbis">ITBIS Extra (%):</label>
+                <input type="number" name="ex-itbis" id="ex-itbis" placeholder="Itbis Extra" max="100">
 
                 <label for="">Cliente: </label>
                 <select name="cliente" id="cliente" required>
