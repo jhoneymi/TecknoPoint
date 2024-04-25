@@ -52,12 +52,26 @@ app.secret_key = cadena
 # SoketIO Confiuracion de una instacia
 socketio = SocketIO(app)
 
-# Configuración de la base de datos
-app.config['MYSQL_HOST'] = 'localhost'
-app.config['MYSQL_USER'] = 'root'
-app.config['MYSQL_PASSWORD'] = ''
-app.config['MYSQL_DB'] = 'teknopoint_original'
-app.config['UPLOAD_FOLDER'] = 'src/static/uploads'
+def cargar_configuracion():
+    configuracion = {}
+    with open('config.txt', 'r') as archivo:
+        for linea in archivo:
+            if not linea.strip() or linea.strip().startswith('#'):
+                continue
+            clave, valor = linea.strip().split('=')
+            configuracion[clave.strip()] = valor.strip()
+    return configuracion
+
+configuracion = cargar_configuracion()
+
+# Configuración de la base de datos MySQL
+app.config['MYSQL_HOST'] = configuracion.get('MYSQL_HOST')
+app.config['MYSQL_USER'] = configuracion.get('MYSQL_USER')
+app.config['MYSQL_PASSWORD'] = configuracion.get('MYSQL_PASSWORD')
+app.config['MYSQL_DB'] = configuracion.get('MYSQL_DB')
+
+# Configuración de la carpeta de subida
+app.config['UPLOAD_FOLDER'] = configuracion.get('UPLOAD_FOLDER')
 
 mysql = MySQL(app)
 
