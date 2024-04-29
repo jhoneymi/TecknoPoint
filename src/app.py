@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify, make_response
 from flask_socketio import SocketIO, emit, namespace, Namespace
 from flask_mysqldb import MySQL
+from decimal import Decimal
 
 # from creditcard import CreditCard
 import bcrypt
@@ -79,21 +80,6 @@ mysql = MySQL(app)
 @app.route('/loader')
 def loader():
     return render_template('loader.html')
-
-def intermedio():
-    contador()
-
-def contador():
-
-    contar = 0
-
-    while True:
-
-        contar += 1
-        print(contar)
-
-        if contar >= 6000000:
-            return redirect(url_for('login'))
 
 # Manejador de error para URL no encontrada (404)
 @app.errorhandler(404)
@@ -203,6 +189,8 @@ def closing():
         closes = obtener_closing()
         return render_template('closing.html', close = closes)
     else:
+        mensaje = "No puedes acceder a esta URL siendo Admin o Empleado solo como Jefe."
+        session['mensaje'] = mensaje
         return redirect(url_for('login'))
 
 def obtener_closing():
@@ -356,6 +344,13 @@ def factura(id):
     total_general = 0
     sub_total = 0
     total_itbis = 0
+    descuento = 0
+    propina = 0
+    itbis = 0
+
+    for fila1 in bill:
+        discount = fila1[4]
+        ex_itbis = fila1[14]
 
     for fila in detail:
         art_price = fila[3]
@@ -363,13 +358,26 @@ def factura(id):
         art_mount = fila[5]
 
         subtotal = art_mount * art_price
-        itbis = subtotal + ( subtotal * art_itbis / 100)
-        sub_itbis = subtotal * art_itbis / 100
+
+        if isinstance(discount, int):
+            descuento = sub_total * discount / 100
+        elif isinstance(discount, float):
+            descuento = sub_total * discount
+
+        if isinstance(art_itbis, int):
+            itbis = (sub_total - descuento) * art_itbis / 100
+        elif isinstance(art_itbis, float):
+            itbis = (sub_total - descuento) * art_itbis
+
+        if isinstance(ex_itbis, int):
+            propina = (sub_total - descuento) * ex_itbis / 100
+        elif isinstance(ex_itbis, float):
+            propina =(sub_total - descuento) * ex_itbis
 
         # Calcular el total general sumando subtotal e ITBIS de cada producto
-        total_general += itbis
+        total_general += subtotal - descuento + itbis + propina
         sub_total += art_mount * art_price
-        total_itbis += sub_itbis
+        total_itbis += itbis
     
     # Formatear los números total_general e itbis con dos decimales
     total_general_formatted = "{:.2f}".format(total_general)
@@ -496,7 +504,7 @@ def pay():
                         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
                         (new_id, fecha_hora_formateada, number_bill, customer, discount, "Tarjeta", "0", "0", cajero, rnc, ubicacion, contacto, total_general, 1, ex_itbis))
         mysql.connection.commit()
-        APB(new_id)
+        APB(new_id,discount,ex_itbis)
 
         enviar(new_id)
 
@@ -510,23 +518,62 @@ def pay():
         flash("Hubo un problema con la tarjeta")
         return redirect(url_for('article'))
 
-def APB(id):
+def APB(id,descuento,propina):
     cur = mysql.connection.cursor()
     cur.execute("SELECT * FROM articles")
 
-    # Obtener todas las filas de la consulta como una lista de tuplas
     articulos = cur.fetchall()
 
     for articulo in articulos:
-        # Insertar cada campo en la tabla art_bills
         cur = mysql.connection.cursor()
         cur.execute("""
             INSERT INTO art_bill (id_bills, decrition, price, itbis, amount)
             VALUES (%s, %s, %s, %s, %s)
         """, (id, articulo[1], articulo[2], articulo[3], articulo[4]))
 
-        # (Optional) Commit the changes to the database
         mysql.connection.commit()
+    
+    total_general = 0
+    sub_total = 0
+    sub_descuento = 0
+    sub_propina = 0
+    itbis2 = 0
+    art_itbis_anterior = 0
+
+    for fila in articulos:
+        art_price = fila[2]
+        art_itbis = fila[3]
+        art_mount = fila[4]
+
+        subtotal = art_mount * art_price
+        sub_total += subtotal
+
+        if descuento:
+            sub_descuento = sub_total * Decimal(descuento) / 100
+        else:
+            sub_descuento = 0
+
+        # Calcula el ITBIS para cada producto
+        if art_itbis == 18.00:
+            itbis = (sub_total - sub_descuento) * art_itbis / 100
+        elif art_itbis != 18.00:
+            art_itbis_anterior = art_itbis
+        else:
+            itbis = 0
+
+        itbis2 = (sub_total - sub_descuento) * Decimal(art_itbis_anterior) / 100
+        subtotal_itbis = (sub_total - sub_descuento) + itbis + itbis2
+
+        if propina:
+            sub_propina = subtotal_itbis * Decimal(propina) / 100
+        else:
+            sub_propina = 0
+
+    total_general += subtotal_itbis + sub_propina
+
+    cursor = mysql.connection.cursor()
+    cursor.execute("UPDATE `bills` SET total_general = %s WHERE id = %s ",(total_general,id,))
+    mysql.connection.commit()
 
 def CIB():
     con = mysql.connection
@@ -639,7 +686,7 @@ def payment():
                     VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
                     (new_id, fecha_hora_formateada, number_bill, customer, discount, "Efectivo", monto_float, cambio, cajero, rnc, ubicacion, contacto, total_general, 1, ex_itbis))
     mysql.connection.commit()
-    APBE(new_id)
+    APBE(new_id,discount,ex_itbis)
 
     enviar(new_id)
 
@@ -650,23 +697,69 @@ def payment():
     flash("La compra se realizó con éxito")
     return redirect(url_for('article'))
 
-def APBE(id):
+def APBE(id,descuento,propina):
+
+    sub_total = 0
+    total_general = 0
+
     cur = mysql.connection.cursor()
     cur.execute("SELECT * FROM articles")
 
-    # Obtener todas las filas de la consulta como una lista de tuplas
     articulos = cur.fetchall()
 
     for articulo in articulos:
-        # Insertar cada campo en la tabla art_bills
         cur = mysql.connection.cursor()
         cur.execute("""
             INSERT INTO art_bill (id_bills, decrition, price, itbis, amount)
             VALUES (%s, %s, %s, %s, %s)
         """, (id, articulo[1], articulo[2], articulo[3], articulo[4]))
 
-        # (Optional) Commit the changes to the database
         mysql.connection.commit()
+
+    total_general = 0
+    sub_total = 0
+    sub_descuento = 0
+    sub_propina = 0
+    itbis2 = 0
+    art_itbis_anterior = 0
+
+    for fila in articulos:
+        art_price = fila[2]
+        art_itbis = fila[3]
+        art_mount = fila[4]
+
+        subtotal = art_mount * art_price
+        sub_total += subtotal
+
+        if descuento:
+            sub_descuento = sub_total * Decimal(descuento) / 100
+        else:
+            sub_descuento = 0
+
+        # Calcula el ITBIS para cada producto
+        if art_itbis == 18.00:
+            itbis = (sub_total - sub_descuento) * art_itbis / 100
+        elif art_itbis != 18.00:
+            art_itbis_anterior = art_itbis
+        else:
+            itbis = 0
+
+        itbis2 = (sub_total - sub_descuento) * Decimal(art_itbis_anterior) / 100
+        subtotal_itbis = (sub_total - sub_descuento) + itbis + itbis2
+
+        if propina:
+            sub_propina = subtotal_itbis * Decimal(propina) / 100
+        else:
+            sub_propina = 0
+
+    # Agrega el total de este producto al total general
+    total_general += subtotal_itbis + sub_propina
+
+    cursor = mysql.connection.cursor()
+    cursor.execute("UPDATE `bills` SET total_general = %s WHERE id = %s ",(total_general,id,))
+    mysql.connection.commit()
+
+
 
 def CIBE():
     con = mysql.connection
@@ -776,23 +869,27 @@ def help():
     return render_template('help.html')
 
 #?  Inicio
-@app.route('/inicio', methods = ['GET', 'POST'])
+@app.route('/inicio', methods=['GET', 'POST'])
 def inicio():
-    if session['logged in'] == True and session['role_id'] == 2:
+    if session.get('logged in') == True and session.get('role_id') == 2:
         customer = obtener_customer()
         INCT = inactive()
-        return render_template('inicio.html', INCT = INCT, CUST = customer)
+        return render_template('inicio.html', INCT=INCT, CUST=customer)
     else:
+        mensaje = "No puedes acceder a esta URL siendo Admin o Empleado solo como Jefe."
+        session['mensaje'] = mensaje
         return redirect(url_for('login'))
 
 #*  Admin
 @app.route('/admin', methods = ['GET','POST'])
 def  admin():
-    if session['logged in'] == True and session['role_id'] == 1:
+    if session.get('logged in') == True and session.get('role_id') == 1:
         users = obtener_Users()
         time = obtener_tiempo()
         return render_template('admin.html', time = time, users = users)
     else:
+        mensaje = "No puedes acceder a esta URL siendo Jefe o Empleado solo como Admin."
+        session['mensaje'] = mensaje
         return redirect(url_for('login'))
 
 def obtener_Users():
@@ -812,7 +909,7 @@ def obtener_tiempo():
 #! History
 @app.route('/history', methods=['GET','POST'])
 def history():
-    if session['logged in'] == True:
+    if session.get('logged in') == True and session.get('role_id') == 2:
         historys = obtener_historys()
         total = 0
 
@@ -822,6 +919,8 @@ def history():
 
         return render_template('history.html', history = historys, total = total)
     else:
+        mensaje = "No puedes acceder a esta URL siendo Admin o Empledo solo como Jefe."
+        session['mensaje'] = mensaje
         return redirect(url_for('login'))
 
 def obtener_historys():
@@ -952,10 +1051,12 @@ def update_bill(id):
 #* Bills Admin
 @app.route('/bills_adm', methods=['GET','POST'])
 def bill_adm():
-    if session['logged in'] == True and session['role_id'] == 1:
+    if session.get('logged in') == True and session.get('role_id') == 1:
         bills = obtener_bills_adm()
         return render_template('bills_adm.html', bills = bills)
     else:
+        mensaje = "No puedes acceder a esta URL siendo Jefe o Empleado solo como Admin."
+        session['mensaje'] = mensaje
         return redirect(url_for('login'))
 
 
@@ -974,53 +1075,69 @@ def factura_detalle_adm(id):
     session['id_factura'] = id
 
     cur = mysql.connection.cursor()
-    cur.execute("SELECT * FROM bills WHERE id = %s",(id,))
+    cur.execute("SELECT * FROM bills WHERE id = %s", (id,))
     bill = cur.fetchall()
     cur.close()
 
     cursor = mysql.connection.cursor()
-    cursor.execute("SELECT * FROM art_bill WHERE id_bills = %s",(id,))
+    cursor.execute("SELECT * FROM art_bill WHERE id_bills = %s", (id,))
     detail = cursor.fetchall()
     cursor.close()
 
     total_general = 0
     sub_total = 0
     total_itbis = 0
-    total_discount = 0
-    total_ex_itbis = 0
+    propina = 0
+    itbis2 = 0
+    art_itbis_anterior = 0
 
     for fila in detail:
         art_price = fila[3]
         art_itbis = fila[4]
         art_mount = fila[5]
 
+
         subtotal = art_mount * art_price
-        itbis = subtotal + ( subtotal * art_itbis / 100)
-        sub_itbis = subtotal * art_itbis / 100
+        sub_total += subtotal
 
-        # Calcular el total general sumando subtotal e ITBIS de cada producto
-        total_general += itbis
-        sub_total += art_mount * art_price
-        total_itbis += sub_itbis
+        # Calcula el descuento para cada producto
+        discount = bill[0][4]
+        if discount:
+            descuento = sub_total * discount / 100
+        else:
+            descuento = 0
 
-    for fila1 in bill:
-        discount = fila1[4]
-        ex_itbis = fila1[14]
+        # Calcula el ITBIS para cada producto
+        if art_itbis == 18.00:
+            itbis = (sub_total - descuento) * art_itbis / 100
+        elif art_itbis != 18.00:
+            art_itbis_anterior = art_itbis
+        else:
+            itbis = 0
 
-        total_discount += subtotal * discount / 100
-        total_ex_itbis += sub_total * ex_itbis / 100
-    
-    total_general_discount = total_general - total_discount
-    total_general_ex_itbis = total_general_discount + total_ex_itbis
+        itbis2 = (sub_total - descuento) * Decimal(art_itbis_anterior) / 100
+        subtotal_itbis = (sub_total - descuento) + itbis + itbis2
 
-    # Formatear los números total_general e itbis con dos decimales
-    total_general_formatted = "{:.2f}".format(total_general_ex_itbis)
+        # Calcula la propina para cada producto
+        ex_itbis = bill[0][14]
+        if ex_itbis:
+            propina = subtotal_itbis * ex_itbis / 100
+        else:
+            propina = 0
+
+    # Agrega el total de este producto al total general
+    total_general += subtotal_itbis + propina
+
+    # Agrega el ITBIS de este producto al total ITBIS
+    total_itbis += subtotal_itbis
+
+    # Formatea los números
+    total_general_formatted = "{:.2f}".format(total_general)
     sub_total_formatted = "{:.2f}".format(sub_total)
     total_itbis_formatted = "{:.2f}".format(total_itbis)
-    
-    for fila in bill:
-        fecha_N = fila[1]
 
+    # Calcula la fecha de vencimiento (asumiendo que la fecha de la factura está en la primera columna)
+    fecha_N = bill[0][1]
     fecha_V = fecha_N + timedelta(days=30)
 
     return render_template("detalle_adm.html", bill=bill, detail=detail, total_itbis = total_itbis_formatted, subtotal = sub_total_formatted, total_general=total_general_formatted, fecha = fecha_V)
@@ -1028,10 +1145,12 @@ def factura_detalle_adm(id):
 #* Bills
 @app.route('/bills', methods=['GET','POST'])
 def bill():
-    if session['logged in'] == True and session['role_id'] == 2:
+    if session.get('logged in') == True and session.get('role_id') == 2:
         bills = obtener_bills()
         return render_template('bills.html', bills = bills)
     else:
+        mensaje = "No puedes acceder a esta URL siendo Admin o Empleado solo como Jefe."
+        session['mensaje'] = mensaje
         return redirect(url_for('login'))
 
 
@@ -1050,54 +1169,69 @@ def factura_detalle(id):
     session['id_factura'] = id
 
     cur = mysql.connection.cursor()
-    cur.execute("SELECT * FROM bills WHERE id = %s",(id,))
+    cur.execute("SELECT * FROM bills WHERE id = %s", (id,))
     bill = cur.fetchall()
     cur.close()
 
     cursor = mysql.connection.cursor()
-    cursor.execute("SELECT * FROM art_bill WHERE id_bills = %s",(id,))
+    cursor.execute("SELECT * FROM art_bill WHERE id_bills = %s", (id,))
     detail = cursor.fetchall()
     cursor.close()
 
     total_general = 0
     sub_total = 0
     total_itbis = 0
-    total_discount = 0
-    total_ex_itbis = 0
+    propina = 0
+    itbis2 = 0
+    art_itbis_anterior = 0
 
     for fila in detail:
         art_price = fila[3]
         art_itbis = fila[4]
         art_mount = fila[5]
 
+
         subtotal = art_mount * art_price
-        itbis = subtotal + ( subtotal * art_itbis / 100)
-        sub_itbis = subtotal * art_itbis / 100
+        sub_total += subtotal
 
-        # Calcular el total general sumando subtotal e ITBIS de cada producto
-        total_general += itbis
-        sub_total += art_mount * art_price
-        total_itbis += sub_itbis
+        # Calcula el descuento para cada producto
+        discount = bill[0][4]
+        if discount:
+            descuento = sub_total * discount / 100
+        else:
+            descuento = 0
 
-        for fila1 in bill:
+        # Calcula el ITBIS para cada producto
+        if art_itbis == 18.00:
+            itbis = (sub_total - descuento) * art_itbis / 100
+        elif art_itbis != 18.00:
+            art_itbis_anterior = art_itbis
+        else:
+            itbis = 0
 
-            discount = fila1[4]
-            ex_itbis = fila1[14]
+        itbis2 = (sub_total - descuento) * Decimal(art_itbis_anterior) / 100
+        subtotal_itbis = (sub_total - descuento) + itbis + itbis2
 
-            total_discount += subtotal * discount / 100
-            total_ex_itbis += sub_total * ex_itbis / 100
-        
-    total_general_discount = total_general - total_discount
-    total_general_ex_itbis = total_general_discount + total_ex_itbis
-    
-    # Formatear los números total_general e itbis con dos decimales
-    total_general_formatted = "{:.2f}".format(total_general_ex_itbis)
+        # Calcula la propina para cada producto
+        ex_itbis = bill[0][14]
+        if ex_itbis:
+            propina = subtotal_itbis * ex_itbis / 100
+        else:
+            propina = 0
+
+    # Agrega el total de este producto al total general
+    total_general += subtotal_itbis + propina
+
+    # Agrega el ITBIS de este producto al total ITBIS
+    total_itbis += subtotal_itbis
+
+    # Formatea los números
+    total_general_formatted = "{:.2f}".format(total_general)
     sub_total_formatted = "{:.2f}".format(sub_total)
     total_itbis_formatted = "{:.2f}".format(total_itbis)
-    
-    for fila in bill:
-        fecha_N = fila[1]
 
+    # Calcula la fecha de vencimiento (asumiendo que la fecha de la factura está en la primera columna)
+    fecha_N = bill[0][1]
     fecha_V = fecha_N + timedelta(days=30)
 
     return render_template("detalle.html", bill=bill, detail=detail, total_itbis = total_itbis_formatted, subtotal = sub_total_formatted, total_general=total_general_formatted, fecha = fecha_V)
@@ -1105,11 +1239,13 @@ def factura_detalle(id):
 #TODO Customers
 @app.route('/customers', methods = ['GET', 'DELETE'])
 def customer():
-    if session['logged in'] == True and session['role_id'] == 2:
+    if session.get('logged in') == True and session.get('role_id') == 2:
         clientes = obtener_customer()
         INCT = inactive()
         return render_template('customers.html', INCT = INCT, clientes=clientes)
     else:
+        mensaje = "No puedes acceder a esta URL siendo Admin o Empleado solo como Jefe."
+        session['mensaje'] = mensaje
         return redirect(url_for('login'))
 
 @app.route('/obtener_customer')
@@ -1195,7 +1331,7 @@ def search_customers_inactive():
 #* Articles
 @app.route('/article')
 def article():
-    if session['logged in'] == True and session['role_id'] == 2:
+    if session.get('logged in') == True and session.get('role_id') == 2:
         datos = obtener_datos_inv()
         articles = obtener_articles()
         customer = obtener_customer()
@@ -1203,6 +1339,8 @@ def article():
         calculo = calculos()
         return render_template('articles.html', datos = datos, articles = articles, calculo = calculo, customer = customer, emp = employees, fullname = session['fullname'])
     else:
+        mensaje = "No puedes acceder a esta URL siendo Admin o Empleado solo como Jefe."
+        session['mensaje'] = mensaje
         return redirect(url_for('login'))
 
 @app.route('/calculos')
@@ -1392,10 +1530,12 @@ def remove_article(id):
 #!  Inventario
 @app.route('/inventario', methods = ['GET', 'DELETE'])
 def inventario():
-    if session['logged in'] == True and session['role_id'] == 2:
+    if session.get('logged in') == True and session.get('role_id') == 2:
         datos = obtener_datos_inv()
         return render_template('inventario.html', datos=datos)
     else:
+        mensaje = "No puedes acceder a esta URL siendo Admin o Empleado solo como Jefe."
+        session['mensaje'] = mensaje
         return redirect(url_for('login'))
 
 @app.route('/search', methods=['POST'])
@@ -1559,28 +1699,7 @@ def login():
                         cur = mysql.connection.cursor()
                         cur.execute('INSERT INTO time (id, id_users, entry_date) VALUES (%s, %s, %s)',(session_id, session_id, fecha_hora_formateada))
                         mysql.connection.commit()
-                    # # Enviar correo electronico cuando se logue e usuario
-                    
-                    # correo_remitente = "tecknopoint1@gmail.com"
-                    # contrasena_remitente = "mrvw gpsb whcr tjjx"
-                    # servidor_smtp = "smtp.gmail.com"
-                    # puerto_smtp = 587
-
-                    # correo_destinatario = email
-                    # asunto="Bienvenido a Teckno Point"
-                    # mensaje="Te has logueado con exito en nuestro punto de venta."
-
-                    # email = EmailMessage()
-                    # email["From"] = correo_remitente
-                    # email["To"] = correo_destinatario
-                    # email["Subject"] = asunto
-                    # email.set_content(mensaje)
-
-                    # with smtplib.SMTP(servidor_smtp, puerto_smtp) as smtp:
-                    #     smtp.starttls()
-                    #     smtp.login(correo_remitente, contrasena_remitente)
-
-                    #     smtp.send_message(email)
+                        
                     return redirect(url_for('inicio'))
                 elif session['role_id'] == 3:
                     cur = mysql.connection.cursor()
@@ -1598,12 +1717,16 @@ def login():
 
                     return redirect(url_for('inicio_emp'))
                 else:
+                    mensaje = "Su usuario no está registrado con ningún rol por favor comunicarse con servicio al cliente en: tecknopoint1@gmail.com."
+                    session['mensaje'] = mensaje
                     return redirect(url_for('login'))
             else:
-                flash('Username or password incorrect', 'error')
+                mensaje = "Nombre de Usuario o Contraseña Incorrectos."
+                session['mensaje'] = mensaje
                 return redirect(url_for('login'))
         else:
-            flash('Username or password incorrect', 'error')
+            mensaje = "No se encontró su usuario por favor registrarse o inténtelo más tarde."
+            session['mensaje'] = mensaje
             return redirect(url_for('login'))
         
     return render_template('login.html')
@@ -1673,10 +1796,12 @@ def logout():
 #?  Proveedores
 @app.route('/proveedor', methods = ['GET', 'DELETE'])
 def proveedor():
-    if session['logged in'] == True and session['role_id'] == 2:
+    if session.get('logged in') == True and session.get('role_id') == 2:
         prov = obtener_datos_prov()
         return render_template('proveedores.html', prov=prov)
     else:
+        mensaje = "No puedes acceder a esta URL siendo Admin o Empleado solo como Jefe."
+        session['mensaje'] = mensaje
         return redirect(url_for('login'))
 
 @app.route('/obtener_datos_prov')
@@ -1747,10 +1872,12 @@ def search_suppliers():
 #& Cotizacion Admin
 @app.route('/cotizacion_adm')
 def cotizacion_adm():
-    if session['logged in'] == True and session['role_id'] == 1:
+    if session.get('logged in') == True and session.get('role_id') == 1:
         cotiz = obtener_adm_cotizacion()
         return render_template('cotizacion_adm.html', cotiz = cotiz)
     else:
+        mensaje = "No puedes acceder a esta URL siendo Jefe o Empleado solo como Admin."
+        session['mensaje'] = mensaje
         return redirect(url_for('login'))
 
 @app.route('/cotizacion_adm_table')
@@ -1765,56 +1892,72 @@ def obtener_adm_cotizacion():
 @app.route('/detalle_cotizacion_adm/<id>')
 def detalle_cotizacion_adm(id):
 
-    session['id_cotizacion'] = id
+    session['id_factura'] = id
 
     cur = mysql.connection.cursor()
-    cur.execute("SELECT * FROM bills WHERE id = %s",(id,))
+    cur.execute("SELECT * FROM bills WHERE id = %s", (id,))
     bill = cur.fetchall()
     cur.close()
 
     cursor = mysql.connection.cursor()
-    cursor.execute("SELECT * FROM art_bill WHERE id_bills = %s",(id,))
+    cursor.execute("SELECT * FROM art_bill WHERE id_bills = %s", (id,))
     detail = cursor.fetchall()
     cursor.close()
 
     total_general = 0
     sub_total = 0
     total_itbis = 0
-    total_discount = 0
-    total_ex_itbis = 0
+    propina = 0
+    itbis2 = 0
+    art_itbis_anterior = 0
 
     for fila in detail:
         art_price = fila[3]
         art_itbis = fila[4]
         art_mount = fila[5]
 
+
         subtotal = art_mount * art_price
-        itbis = subtotal + ( subtotal * art_itbis / 100)
-        sub_itbis = subtotal * art_itbis / 100
+        sub_total += subtotal
 
-        # Calcular el total general sumando subtotal e ITBIS de cada producto
-        total_general += itbis
-        sub_total += art_mount * art_price
-        total_itbis += sub_itbis
+        # Calcula el descuento para cada producto
+        discount = bill[0][4]
+        if discount:
+            descuento = sub_total * discount / 100
+        else:
+            descuento = 0
 
-        for fila1 in bill:
-            discount = fila1[4]
-            ex_itbis = fila1[14]
+        # Calcula el ITBIS para cada producto
+        if art_itbis == 18.00:
+            itbis = (sub_total - descuento) * art_itbis / 100
+        elif art_itbis != 18.00:
+            art_itbis_anterior = art_itbis
+        else:
+            itbis = 0
 
-            total_discount += subtotal * discount / 100
-            total_ex_itbis += sub_total * ex_itbis / 100
-    
-    total_general_discount = total_general - total_discount
-    total_general_ex_itbis = total_general_discount + total_ex_itbis
-    
-    # Formatear los números total_general e itbis con dos decimales
-    total_general_formatted = "{:.2f}".format(total_general_ex_itbis)
+        itbis2 = (sub_total - descuento) * Decimal(art_itbis_anterior) / 100
+        subtotal_itbis = (sub_total - descuento) + itbis + itbis2
+
+        # Calcula la propina para cada producto
+        ex_itbis = bill[0][14]
+        if ex_itbis:
+            propina = subtotal_itbis * ex_itbis / 100
+        else:
+            propina = 0
+
+    # Agrega el total de este producto al total general
+    total_general += subtotal_itbis + propina
+
+    # Agrega el ITBIS de este producto al total ITBIS
+    total_itbis += subtotal_itbis
+
+    # Formatea los números
+    total_general_formatted = "{:.2f}".format(total_general)
     sub_total_formatted = "{:.2f}".format(sub_total)
     total_itbis_formatted = "{:.2f}".format(total_itbis)
-    
-    for fila in bill:
-        fecha_N = fila[1]
 
+    # Calcula la fecha de vencimiento (asumiendo que la fecha de la factura está en la primera columna)
+    fecha_N = bill[0][1]
     fecha_V = fecha_N + timedelta(days=30)
 
     return render_template("detalle_cotizacion_adm.html", bill=bill, detail=detail, total_itbis = total_itbis_formatted, subtotal = sub_total_formatted, total_general=total_general_formatted, fecha = fecha_V)
@@ -1823,10 +1966,12 @@ def detalle_cotizacion_adm(id):
 #* Cotizacion
 @app.route('/cotizacion')
 def cotizacion():
-    if session['logged in'] == True and session['role_id'] == 2:
+    if session.get('logged in') == True and session.get('role_id') == 2:
         cotiz = obtener_cotizacion()
         return render_template('cotizacion.html', cotiz = cotiz)
     else:
+        mensaje = "No puedes acceder a esta URL siendo Admin o Empleado solo como Jefe."
+        session['mensaje'] = mensaje
         return redirect(url_for('login'))
 
 @app.route('/cotizacion_table')
@@ -1841,23 +1986,22 @@ def obtener_cotizacion():
 @app.route('/detalle_cotizacion/<id>')
 def detalle_cotizacion(id):
 
-    session['id_cotizacion'] = id
+    session['id_factura'] = id
 
     cur = mysql.connection.cursor()
-    cur.execute("SELECT * FROM bills WHERE id = %s",(id,))
+    cur.execute("SELECT * FROM bills WHERE id = %s", (id,))
     bill = cur.fetchall()
     cur.close()
 
     cursor = mysql.connection.cursor()
-    cursor.execute("SELECT * FROM art_bill WHERE id_bills = %s",(id,))
+    cursor.execute("SELECT * FROM art_bill WHERE id_bills = %s", (id,))
     detail = cursor.fetchall()
     cursor.close()
 
     total_general = 0
     sub_total = 0
     total_itbis = 0
-    total_discount = 0
-    total_ex_itbis = 0
+    propina = 0
 
     for fila in detail:
         art_price = fila[3]
@@ -1865,32 +2009,41 @@ def detalle_cotizacion(id):
         art_mount = fila[5]
 
         subtotal = art_mount * art_price
-        itbis = subtotal + ( subtotal * art_itbis / 100)
-        sub_itbis = subtotal * art_itbis / 100
+        sub_total += subtotal
 
-        # Calcular el total general sumando subtotal e ITBIS de cada producto
-        total_general += itbis
-        sub_total += art_mount * art_price
-        total_itbis += sub_itbis
-    
-        for fila1 in bill:
-            discount = fila1[4]
-            ex_itbis = fila1[14]
+        # Calcula el descuento para cada producto
+        discount = bill[0][4]
+        if discount:
+            descuento = subtotal * (discount / 100)
+        else:
+            descuento = 0
 
-            total_discount += subtotal * discount / 100
-            total_ex_itbis += sub_total * ex_itbis / 100
-        
-    total_general_discount = total_general - total_discount
-    total_general_ex_itbis = total_general_discount + total_ex_itbis
+        # Calcula el ITBIS para cada producto
+        if art_itbis:
+            itbis = (subtotal - descuento) * (art_itbis / 100)
+        else:
+            itbis = 0
 
-    # Formatear los números total_general e itbis con dos decimales
-    total_general_formatted = "{:.2f}".format(total_general_ex_itbis)
+        # Calcula la propina para cada producto
+        ex_itbis = bill[0][14]
+        if ex_itbis:
+            propina = (subtotal - descuento) * (ex_itbis / 100)
+        else:
+            propina = 0
+
+        # Agrega el total de este producto al total general
+        total_general += subtotal - descuento + itbis + propina
+
+        # Agrega el ITBIS de este producto al total ITBIS
+        total_itbis += itbis
+
+    # Formatea los números
+    total_general_formatted = "{:.2f}".format(total_general)
     sub_total_formatted = "{:.2f}".format(sub_total)
     total_itbis_formatted = "{:.2f}".format(total_itbis)
-    
-    for fila in bill:
-        fecha_N = fila[1]
 
+    # Calcula la fecha de vencimiento (asumiendo que la fecha de la factura está en la primera columna)
+    fecha_N = bill[0][1]
     fecha_V = fecha_N + timedelta(days=30)
 
     return render_template("detalle_cotizacion.html", bill=bill, detail=detail, total_itbis = total_itbis_formatted, subtotal = sub_total_formatted, total_general=total_general_formatted, fecha = fecha_V)
@@ -1900,10 +2053,12 @@ def detalle_cotizacion(id):
 
 @app.route('/cotizacion_emp')
 def cotiz_emp():
-    if session['logged in'] == True and session['role_id'] == 3:
+    if session.get('logged in') == True and session.get('role_id') == 3:
         cotiz = obtener_cotizacion_emp()
         return render_template('cotizacion_emp.html', cotiz = cotiz)
     else:
+        mensaje = "No puedes acceder a esta URL siendo Admin o Jefe solo como Empleado."
+        session['mensaje'] = mensaje
         return redirect(url_for('login'))
 
 @app.route('/cotizacion_table')
@@ -1919,96 +2074,146 @@ def obtener_cotizacion_emp():
 
 @app.route('/cotizacion_detalle_emp/<id>')
 def cotizacion_detalle_emp(id):
+
+    session['id_factura'] = id
+
     cur = mysql.connection.cursor()
-    cur.execute("SELECT * FROM bills WHERE id = %s",(id,))
+    cur.execute("SELECT * FROM bills WHERE id = %s", (id,))
     bill = cur.fetchall()
     cur.close()
 
     cursor = mysql.connection.cursor()
-    cursor.execute("SELECT * FROM art_bill WHERE id_bills = %s",(id,))
+    cursor.execute("SELECT * FROM art_bill WHERE id_bills = %s", (id,))
     detail = cursor.fetchall()
     cursor.close()
 
     total_general = 0
     sub_total = 0
     total_itbis = 0
-    total_discount = 0
-    total_ex_itbis = 0
+    propina = 0
+    itbis2 = 0
+    art_itbis_anterior = 0
 
     for fila in detail:
         art_price = fila[3]
         art_itbis = fila[4]
         art_mount = fila[5]
 
+
         subtotal = art_mount * art_price
-        itbis = subtotal + ( subtotal * art_itbis / 100)
-        sub_itbis = subtotal * art_itbis / 100
+        sub_total += subtotal
 
-        # Calcular el total general sumando subtotal e ITBIS de cada producto
-        total_general += itbis
-        sub_total += art_mount * art_price
-        total_itbis += sub_itbis
+        # Calcula el descuento para cada producto
+        discount = bill[0][4]
+        if discount:
+            descuento = sub_total * discount / 100
+        else:
+            descuento = 0
 
-        for fila1 in bill:
-            discount = fila1[4]
-            ex_itbis = fila1[14]
+        # Calcula el ITBIS para cada producto
+        if art_itbis == 18.00:
+            itbis = (sub_total - descuento) * art_itbis / 100
+        elif art_itbis != 18.00:
+            art_itbis_anterior = art_itbis
+        else:
+            itbis = 0
 
-            total_discount += subtotal * discount / 100
-            total_ex_itbis += sub_total * ex_itbis / 100
-    
-    total_general_discount = total_general - total_discount
-    total_general_ex_itbis = total_general_discount + total_ex_itbis
-    
-    # Formatear los números total_general e itbis con dos decimales
-    total_general_formatted = "{:.2f}".format(total_general_ex_itbis)
+        itbis2 = (sub_total - descuento) * Decimal(art_itbis_anterior) / 100
+        subtotal_itbis = (sub_total - descuento) + itbis + itbis2
+
+        # Calcula la propina para cada producto
+        ex_itbis = bill[0][14]
+        if ex_itbis:
+            propina = subtotal_itbis * ex_itbis / 100
+        else:
+            propina = 0
+
+    # Agrega el total de este producto al total general
+    total_general += subtotal_itbis + propina
+
+    # Agrega el ITBIS de este producto al total ITBIS
+    total_itbis += subtotal_itbis
+
+    # Formatea los números
+    total_general_formatted = "{:.2f}".format(total_general)
     sub_total_formatted = "{:.2f}".format(sub_total)
     total_itbis_formatted = "{:.2f}".format(total_itbis)
-    
-    for fila in bill:
-        fecha_N = fila[1]
 
+    # Calcula la fecha de vencimiento (asumiendo que la fecha de la factura está en la primera columna)
+    fecha_N = bill[0][1]
     fecha_V = fecha_N + timedelta(days=30)
 
     return render_template("detalle_cotizacion_emp.html",bill=bill, detail=detail, total_itbis = total_itbis_formatted, subtotal = sub_total_formatted, total_general=total_general_formatted, fecha = fecha_V)
 
 @app.route('/cotizacion_p/<id>')
 def cotizacion_p(id):
+
+    session['id_factura'] = id
+
     cur = mysql.connection.cursor()
-    cur.execute("SELECT * FROM bills WHERE id = %s",(id,))
+    cur.execute("SELECT * FROM bills WHERE id = %s", (id,))
     bill = cur.fetchall()
     cur.close()
 
     cursor = mysql.connection.cursor()
-    cursor.execute("SELECT * FROM art_bill WHERE id_bills = %s",(id,))
+    cursor.execute("SELECT * FROM art_bill WHERE id_bills = %s", (id,))
     detail = cursor.fetchall()
     cursor.close()
 
     total_general = 0
     sub_total = 0
     total_itbis = 0
+    propina = 0
+    itbis2 = 0
+    art_itbis_anterior = 0
 
     for fila in detail:
         art_price = fila[3]
         art_itbis = fila[4]
         art_mount = fila[5]
 
-        subtotal = art_mount * art_price
-        itbis = subtotal + ( subtotal * art_itbis / 100)
-        sub_itbis = subtotal * art_itbis / 100
 
-        # Calcular el total general sumando subtotal e ITBIS de cada producto
-        total_general += itbis
-        sub_total += art_mount * art_price
-        total_itbis += sub_itbis
-    
-    # Formatear los números total_general e itbis con dos decimales
+        subtotal = art_mount * art_price
+        sub_total += subtotal
+
+        # Calcula el descuento para cada producto
+        discount = bill[0][4]
+        if discount:
+            descuento = sub_total * discount / 100
+        else:
+            descuento = 0
+
+        # Calcula el ITBIS para cada producto
+        if art_itbis == 18.00:
+            itbis = (sub_total - descuento) * art_itbis / 100
+        elif art_itbis != 18.00:
+            art_itbis_anterior = art_itbis
+        else:
+            itbis = 0
+
+        itbis2 = (sub_total - descuento) * Decimal(art_itbis_anterior) / 100
+        subtotal_itbis = (sub_total - descuento) + itbis + itbis2
+
+        # Calcula la propina para cada producto
+        ex_itbis = bill[0][14]
+        if ex_itbis:
+            propina = subtotal_itbis * ex_itbis / 100
+        else:
+            propina = 0
+
+    # Agrega el total de este producto al total general
+    total_general += subtotal_itbis + propina
+
+    # Agrega el ITBIS de este producto al total ITBIS
+    total_itbis += subtotal_itbis
+
+    # Formatea los números
     total_general_formatted = "{:.2f}".format(total_general)
     sub_total_formatted = "{:.2f}".format(sub_total)
     total_itbis_formatted = "{:.2f}".format(total_itbis)
-    
-    for fila in bill:
-        fecha_N = fila[1]
 
+    # Calcula la fecha de vencimiento (asumiendo que la fecha de la factura está en la primera columna)
+    fecha_N = bill[0][1]
     fecha_V = fecha_N + timedelta(days=30)
 
     return render_template("cotizacion_detalle.html", bill=bill, detail=detail, total_itbis = total_itbis_formatted, subtotal = sub_total_formatted, total_general=total_general_formatted, fecha = fecha_V)
@@ -2018,9 +2223,11 @@ def cotizacion_p(id):
 
 @app.route('/inicio_emp')
 def inicio_emp():
-    if session['logged in'] == True and session['role_id'] == 3:
+    if session.get('logged in') == True and session.get('role_id') == 3:
         return render_template('/inicio_emp.html')
     else:
+        mensaje = "No puedes acceder a esta URL siendo Admin o Jefe solo como Empleado."
+        session['mensaje'] = mensaje
         return redirect(url_for('login'))
 
 @app.route('/bills_emp')
@@ -2041,61 +2248,80 @@ def obtener_bills_emp():
 
 @app.route('/factura_detalle_emp/<id>')
 def factura_detalle_emp(id):
+
+    session['id_factura'] = id
+
     cur = mysql.connection.cursor()
-    cur.execute("SELECT * FROM bills WHERE id = %s",(id,))
+    cur.execute("SELECT * FROM bills WHERE id = %s", (id,))
     bill = cur.fetchall()
     cur.close()
 
     cursor = mysql.connection.cursor()
-    cursor.execute("SELECT * FROM art_bill WHERE id_bills = %s",(id,))
+    cursor.execute("SELECT * FROM art_bill WHERE id_bills = %s", (id,))
     detail = cursor.fetchall()
     cursor.close()
 
     total_general = 0
     sub_total = 0
     total_itbis = 0
-    total_discount = 0
-    total_ex_itbis = 0
+    propina = 0
+    itbis2 = 0
+    art_itbis_anterior = 0
 
     for fila in detail:
         art_price = fila[3]
         art_itbis = fila[4]
         art_mount = fila[5]
 
+
         subtotal = art_mount * art_price
-        itbis = subtotal + ( subtotal * art_itbis / 100)
-        sub_itbis = subtotal * art_itbis / 100
+        sub_total += subtotal
 
-        # Calcular el total general sumando subtotal e ITBIS de cada producto
-        total_general += itbis
-        sub_total += art_mount * art_price
-        total_itbis += sub_itbis
-    
-        for fila1 in bill:
-            discount = fila1[4]
-            ex_itbis = fila1[14]
+        # Calcula el descuento para cada producto
+        discount = bill[0][4]
+        if discount:
+            descuento = sub_total * discount / 100
+        else:
+            descuento = 0
 
-            total_discount += subtotal * discount / 100
-            total_ex_itbis += sub_total * ex_itbis / 100
+        # Calcula el ITBIS para cada producto
+        if art_itbis == 18.00:
+            itbis = (sub_total - descuento) * art_itbis / 100
+        elif art_itbis != 18.00:
+            art_itbis_anterior = art_itbis
+        else:
+            itbis = 0
 
-    total_general_discount = total_general - total_discount
-    total_general_ex_itbis = total_general_discount + total_ex_itbis
+        itbis2 = (sub_total - descuento) * Decimal(art_itbis_anterior) / 100
+        subtotal_itbis = (sub_total - descuento) + itbis + itbis2
 
-    # Formatear los números total_general e itbis con dos decimales
-    total_general_formatted = "{:.2f}".format(total_general_ex_itbis)
+        # Calcula la propina para cada producto
+        ex_itbis = bill[0][14]
+        if ex_itbis:
+            propina = subtotal_itbis * ex_itbis / 100
+        else:
+            propina = 0
+
+    # Agrega el total de este producto al total general
+    total_general += subtotal_itbis + propina
+
+    # Agrega el ITBIS de este producto al total ITBIS
+    total_itbis += subtotal_itbis
+
+    # Formatea los números
+    total_general_formatted = "{:.2f}".format(total_general)
     sub_total_formatted = "{:.2f}".format(sub_total)
     total_itbis_formatted = "{:.2f}".format(total_itbis)
-    
-    for fila in bill:
-        fecha_N = fila[1]
 
+    # Calcula la fecha de vencimiento (asumiendo que la fecha de la factura está en la primera columna)
+    fecha_N = bill[0][1]
     fecha_V = fecha_N + timedelta(days=30)
 
     return render_template("detalle_emp.html", bill=bill, detail=detail, total_itbis = total_itbis_formatted, subtotal = sub_total_formatted, total_general=total_general_formatted, fecha = fecha_V)
 
 @app.route('/article_emp')
 def article_emp():
-    if session['logged in'] == True and session['role_id'] == 2:
+    if session.get('logged in') == True and session.get('role_id') == 3:
         datos = obtener_datos_inv()
         articles = obtener_articles_emp()
         customer = obtener_customer()
@@ -2103,6 +2329,8 @@ def article_emp():
         calculo = calculos_emp()
         return render_template('articles_emp.html', datos = datos, articles = articles, calculo = calculo, customer = customer, emp = employees, fullname = session['fullname'])
     else:
+        mensaje = "No puedes acceder a esta URL siendo Admin o Jefe solo como Empleado."
+        session['mensaje'] = mensaje
         return redirect(url_for('login'))
 
 @app.route('/calculos_emp')
@@ -2224,6 +2452,8 @@ def pay_emp():
 
     new_id = CIB()
 
+    session['id_new_factura'] = new_id
+
     if tarjeta:
         fecha_hora = datetime.now()
         fecha_hora_formateada = fecha_hora.strftime("%Y-%m-%d %H:%M:%S")
@@ -2231,11 +2461,11 @@ def pay_emp():
         number_bill = GNF()
 
         cur = mysql.connection.cursor()
-        cur.execute("""INSERT INTO bills (id, date, number_bill, customer, discount, way_to_pay, paid, `change`, cashier, rnc_client_bill, ubicacion, contacto, total_general, estado, Itbisextra) 
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
-                        (new_id, fecha_hora_formateada, number_bill, customer, discount, "Tarjeta", "0", "0", cajero, rnc, ubicacion, contacto, total_general, 1, ex_itbis))
+        cur.execute("""INSERT INTO bills (id, date, number_bill, customer, discount, way_to_pay, paid, `change`, cashier, rnc_client_bill, ubicacion, contacto, estado, Itbisextra) 
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
+                        (new_id, fecha_hora_formateada, number_bill, customer, discount, "Tarjeta", "0", "0", cajero, rnc, ubicacion, contacto, 1, ex_itbis))
         mysql.connection.commit()
-        APB(new_id)
+        APB(new_id,discount,ex_itbis)
 
         enviar(new_id)
 
@@ -2288,17 +2518,19 @@ def payment_emp():
 
     new_id = CIBE()
 
+    session['id_new_factura'] = new_id
+
     fecha_hora = datetime.now()
     fecha_hora_formateada = fecha_hora.strftime("%Y-%m-%d %H:%M:%S")
 
     number_bill = GNFE()
 
     cur = mysql.connection.cursor()
-    cur.execute("""INSERT INTO bills (id, date, number_bill, customer, discount, way_to_pay, paid, `change`, cashier, rnc_client_bill, ubicacion, contacto, total_general, estado, Itbisextra) 
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
-                    (new_id, fecha_hora_formateada, number_bill, customer, discount, "Efectivo", monto_float, cambio, cajero, rnc, ubicacion, contacto, total_general, 1, ex_itbis))
+    cur.execute("""INSERT INTO bills (id, date, number_bill, customer, discount, way_to_pay, paid, `change`, cashier, rnc_client_bill, ubicacion, contacto, estado, Itbisextra) 
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
+                    (new_id, fecha_hora_formateada, number_bill, customer, discount, "Efectivo", monto_float, cambio, cajero, rnc, ubicacion, contacto, 1, ex_itbis))
     mysql.connection.commit()
-    APBE(new_id)
+    APBE(new_id,discount,ex_itbis)
 
     enviar(new_id)
 
@@ -2338,6 +2570,7 @@ def agregar_cantidad_emp(id):
             cur.execute('UPDATE products SET product_amount = product_amount - 1 WHERE product_id = %s', (id,))
             mysql.connection.commit()
             flash('Cantidad agregada correctamente.')
+
     except Exception as e:
         flash('Error al agregar cantidad: {}'.format(str(e)))
     finally:
@@ -2447,10 +2680,12 @@ def cierre_emp():
 
 @app.route('/empleados', methods = ['GET', 'DELETE'])
 def empleados():
-    if session['logged in'] == True and session['role_id'] == 2:
+    if session.get('logged in') == True and session.get('role_id') == 2:
         empleados = obtener_datos_emp()
         return render_template('/empleados.html', empleados=empleados)
     else:
+        mensaje = "No puedes acceder a esta URL siendo Admin o Empleado solo como Jefe."
+        session['mensaje'] = mensaje
         return redirect(url_for('login'))
 
 @app.route('/obtener_datos_emp')

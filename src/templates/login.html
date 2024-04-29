@@ -186,6 +186,7 @@
     </style>
 </head>
 <body>
+    <div id="mensaje" data-mensaje="{% if 'mensaje' in session %}{{ session['mensaje'] }}{% endif %}"></div>
     <main>
         <div class="container_all">
             <div class="rear__box">
@@ -220,7 +221,13 @@
             </div>
         </div>
     </main>
+    <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
     <script>
+        var mensaje = document.getElementById("mensaje").getAttribute("data-mensaje");
+        if (mensaje) {
+            swal("Error", mensaje, "error");
+        }
+
         document.getElementById("btn__register").addEventListener("click", register);
         document.getElementById("btn__login").addEventListener("click", IniciarSesion);
         window.addEventListener("resize", anchoPagina);
