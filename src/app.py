@@ -1518,11 +1518,16 @@ def quitar_cantidad(id):
 
 @app.route('/remove_article/<string:id>')
 def remove_article(id):
+
+    cursor = mysql.connection.cursor()
+    cursor.execute('SELECT amount FROM products wHERE product_id = %s',(id,))
+    cant = cursor.fetchone()[0]
+
     cur = mysql.connection.cursor()
     cur.execute('DELETE FROM articles WHERE id = {0}'.format(id))
     mysql.connection.commit()
 
-    cur.execute('UPDATE products SET product_amount = product_amount + 1 WHERE product_id = %s', (id,))
+    cur.execute('UPDATE products SET product_amount = %s WHERE product_id = %s', (cant,id,))
     mysql.connection.commit()
     flash('Contact Removed Successfully')
     return redirect(url_for('article'))
@@ -2602,11 +2607,16 @@ def quitar_cantidad_emp(id):
 
 @app.route('/remove_article_emp/<string:id>')
 def remove_article_emp(id):
+
+    cursor = mysql.connection.cursor()
+    cursor.execute('SELECT amount FROM products wHERE product_id = %s',(id,))
+    cant = cursor.fetchone()[0]
+
     cur = mysql.connection.cursor()
     cur.execute('DELETE FROM articles WHERE id = {0}'.format(id))
     mysql.connection.commit()
 
-    cur.execute('UPDATE products SET product_amount = product_amount + 1 WHERE product_id = %s', (id,))
+    cur.execute('UPDATE products SET product_amount = %s WHERE product_id = %s', (cant, id,))
     mysql.connection.commit()
     flash('Contact Removed Successfully')
     return redirect(url_for('article_emp'))

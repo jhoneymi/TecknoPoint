@@ -28,9 +28,6 @@ document.addEventListener('DOMContentLoaded', function () {
                     <td>${(fila[4] < 6) ? '<span class="red">' + fila[4] + '</span>' : fila[4]}</td>
                     <td>${fila[6]}</td>
                     <td>
-                        ${(fila[4] < 6) ? 
-                            `<a href=""><button id="remove"><i class="fa-solid fa-triangle-exclamation"></button></i></a>`
-                            : ''}
                         <a href="/edit/${fila[0]}"><button id="edit">Editar</button></a>
                         <a href="/remove_art/${fila[0]}"><button id="remove" class="Borrar" value="${fila[0]}">Borrar</button></a>
                     </td>`;
