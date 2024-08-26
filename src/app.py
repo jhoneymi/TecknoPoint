@@ -10,37 +10,37 @@ import os
 import threading
 import io
 
-#libreria para la factura en PDF
+#Bookshop for the bills in PDF
 import pdfkit
 
-# Librerias para el tiempo
+# Bookstores for the time
 from datetime import datetime, timedelta
 import time
 
-# Librerias Random
+# Bookstores Random
 import random
 import string
 
-# Librerias para mandar correos electronicos
+# Bookstores for send emails
 import smtplib
 from email.message import EmailMessage
 
 
 app = Flask(__name__)
 
-# Ruta al ejecutable de wkhtmltopdf
+# Path to wkhtmltopdf executable
 wkhtmltopdf_path = r'C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe'
 
-# Ruta para crear el pdf que se va a enviar
+# Path to create the PDF to be sent
 pdf_output_folder = r'C:\Users\slime\Desktop\TecnoPoint 2\src\pdfs'
 
-# Configura pdfkit para usar la ruta del ejecutable
+# Configure pdfkit to use the executable path
 config = pdfkit.configuration(wkhtmltopdf=wkhtmltopdf_path)
 
-# solo se declarar variables pero no mi amor
+# I only know how to declare variables but not my love
 mensage = ""
 
-# Configuración de la clave secreta para sesiones
+# Configuring the secret key for sessions
 def aleatoria(longitud):
     caracteres = string.ascii_letters + string.digits + string.punctuation
     cadena_aleatoria = ''.join(random.choice(caracteres) for _ in range(longitud))
@@ -50,7 +50,7 @@ cadena = aleatoria(10)
 
 app.secret_key = cadena
 
-# SoketIO Confiuracion de una instacia
+# Socket IO Setting up an instance
 socketio = SocketIO(app)
 
 def cargar_configuracion():
@@ -65,13 +65,13 @@ def cargar_configuracion():
 
 configuracion = cargar_configuracion()
 
-# Configuración de la base de datos MySQL
+# MySQL database configuration
 app.config['MYSQL_HOST'] = configuracion.get('MYSQL_HOST')
 app.config['MYSQL_USER'] = configuracion.get('MYSQL_USER')
 app.config['MYSQL_PASSWORD'] = configuracion.get('MYSQL_PASSWORD')
 app.config['MYSQL_DB'] = configuracion.get('MYSQL_DB')
 
-# Configuración de la carpeta de subida
+# Upload Folder Settings
 app.config['UPLOAD_FOLDER'] = configuracion.get('UPLOAD_FOLDER')
 
 mysql = MySQL(app)
@@ -81,7 +81,7 @@ mysql = MySQL(app)
 def loader():
     return render_template('loader.html')
 
-# Manejador de error para URL no encontrada (404)
+# Error handler for URL not found (404)
 @app.errorhandler(404)
 def page_not_found(error):
     previous_page = request.referrer
